@@ -1,8 +1,8 @@
 package com.profitrack.dominio.puerto.entrada;
 
-import com.profitrack.aplicacion.dto.DuenioPatchDto;
-import com.profitrack.aplicacion.dto.DuenioRequestDto;
-import com.profitrack.aplicacion.dto.DuenioResponseDto;
+import com.profitrack.aplicacion.dto.duenioDto.DuenioPatchDto;
+import com.profitrack.aplicacion.dto.duenioDto.DuenioRequestDto;
+import com.profitrack.aplicacion.dto.duenioDto.DuenioResponseDto;
 
 import java.util.List;
 

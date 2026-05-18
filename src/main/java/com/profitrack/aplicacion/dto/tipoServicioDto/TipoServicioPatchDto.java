@@ -1,4 +1,4 @@
-package com.profitrack.aplicacion.dto;
+package com.profitrack.aplicacion.dto.tipoServicioDto;
 
 import lombok.Data;
 

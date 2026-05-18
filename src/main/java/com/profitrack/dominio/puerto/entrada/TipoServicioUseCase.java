@@ -1,8 +1,8 @@
 package com.profitrack.dominio.puerto.entrada;
 
-import com.profitrack.aplicacion.dto.TipoServicioPatchDto;
-import com.profitrack.aplicacion.dto.TipoServicioRequestDto;
-import com.profitrack.aplicacion.dto.TipoServicioResponseDto;
+import com.profitrack.aplicacion.dto.tipoServicioDto.TipoServicioPatchDto;
+import com.profitrack.aplicacion.dto.tipoServicioDto.TipoServicioRequestDto;
+import com.profitrack.aplicacion.dto.tipoServicioDto.TipoServicioResponseDto;
 
 import java.util.List;
 

@@ -1,24 +1,22 @@
-package com.profitrack.aplicacion.dto;
+package com.profitrack.aplicacion.dto.empleadoDto;
 
-import lombok.Builder;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
-@Builder
-public class EmpleadoResponseDto {
-    private Long id;
-    private Long empresaId;
-    private String nombreEmpresa;
+public class EmpleadoPatchDto {
     private Long rolId;
-    private String nombreRol;
     private String nombres;
     private String apellidos;
     private String numeroDocumento;
+
+    @Email
     private String correo;
+
     private String telefono;
+    private String contrasenia;
     private LocalDate fechaIngreso;
     private LocalDate fechaSalida;
-    private Boolean activo;
 }

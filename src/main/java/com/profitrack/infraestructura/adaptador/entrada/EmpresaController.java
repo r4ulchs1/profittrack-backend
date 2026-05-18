@@ -1,8 +1,8 @@
 package com.profitrack.infraestructura.adaptador.entrada;
 
-import com.profitrack.aplicacion.dto.EmpresaPatchDto;
-import com.profitrack.aplicacion.dto.EmpresaRequestDto;
-import com.profitrack.aplicacion.dto.EmpresaResponseDto;
+import com.profitrack.aplicacion.dto.empresaDto.EmpresaPatchDto;
+import com.profitrack.aplicacion.dto.empresaDto.EmpresaRequestDto;
+import com.profitrack.aplicacion.dto.empresaDto.EmpresaResponseDto;
 import com.profitrack.dominio.puerto.entrada.EmpresaUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,8 @@
 package com.profitrack.infraestructura.adaptador.entrada;
 
-import com.profitrack.aplicacion.dto.DuenioPatchDto;
-import com.profitrack.aplicacion.dto.DuenioRequestDto;
-import com.profitrack.aplicacion.dto.DuenioResponseDto;
+import com.profitrack.aplicacion.dto.duenioDto.DuenioPatchDto;
+import com.profitrack.aplicacion.dto.duenioDto.DuenioRequestDto;
+import com.profitrack.aplicacion.dto.duenioDto.DuenioResponseDto;
 import com.profitrack.dominio.puerto.entrada.DuenioUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

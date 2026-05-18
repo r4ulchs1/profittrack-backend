@@ -1,15 +1,16 @@
-package com.profitrack.aplicacion.dto;
+package com.profitrack.aplicacion.dto.empresaDto;
 
-import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class EmpresaRequestDto {
-
-    @NotBlank
+@Builder
+public class EmpresaResponseDto {
+    private Long id;
     private String nombre;
     private String ruc;
     private String direccion;
     private String telefono;
     private String correo;
+    private Boolean activo;
 }

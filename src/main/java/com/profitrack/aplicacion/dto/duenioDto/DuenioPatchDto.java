@@ -1,4 +1,4 @@
-package com.profitrack.aplicacion.dto;
+package com.profitrack.aplicacion.dto.duenioDto;
 
 import jakarta.validation.constraints.Email;
 import lombok.Data;

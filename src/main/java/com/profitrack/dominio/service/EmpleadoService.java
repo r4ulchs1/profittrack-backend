@@ -1,8 +1,8 @@
 package com.profitrack.dominio.service;
 
-import com.profitrack.aplicacion.dto.EmpleadoPatchDto;
-import com.profitrack.aplicacion.dto.EmpleadoRequestDto;
-import com.profitrack.aplicacion.dto.EmpleadoResponseDto;
+import com.profitrack.aplicacion.dto.empleadoDto.EmpleadoPatchDto;
+import com.profitrack.aplicacion.dto.empleadoDto.EmpleadoRequestDto;
+import com.profitrack.aplicacion.dto.empleadoDto.EmpleadoResponseDto;
 import com.profitrack.dominio.model.Empleado;
 import com.profitrack.dominio.model.Empresa;
 import com.profitrack.dominio.model.Rol;
