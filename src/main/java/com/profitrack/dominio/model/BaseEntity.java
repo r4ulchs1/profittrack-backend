@@ -27,6 +27,9 @@ public abstract class BaseEntity {
     @Column(name = "updated_at", columnDefinition = "timestamp with time zone")
     private Instant actualizadoEn;
 
+    @Column(nullable = false)
+    private Boolean activo = true;
+
     @PrePersist
     protected void alCrear() {
         Instant ahora = Instant.now();
