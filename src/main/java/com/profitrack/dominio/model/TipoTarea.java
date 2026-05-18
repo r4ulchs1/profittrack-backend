@@ -1,4 +1,4 @@
-package com.profitrack.dominio.modelo;
+package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,18 +13,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "categorias_egreso")
+@Table(name = "tipos_tarea")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CategoriaEgreso extends BaseEntity {
+public class TipoTarea extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    @Column(length = 100)
+    @Column(length = 120)
     private String nombre;
+
+    @Column(columnDefinition = "text")
+    private String descripcion;
 }

@@ -1,6 +1,6 @@
 package com.profitrack.infraestructura.adaptador.salida.persistencia;
 
-import com.profitrack.dominio.modelo.BaseEntity;
+import com.profitrack.dominio.model.BaseEntity;
 import com.profitrack.dominio.puerto.salida.RepositorioGenerico;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;

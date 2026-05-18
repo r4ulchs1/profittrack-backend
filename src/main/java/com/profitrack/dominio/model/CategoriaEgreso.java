@@ -1,4 +1,4 @@
-package com.profitrack.dominio.modelo;
+package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,30 +13,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "owners")
+@Table(name = "categorias_egreso")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Duenio extends BaseEntity {
+public class CategoriaEgreso extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    @Column(length = 120)
-    private String nombres;
-
-    @Column(length = 120)
-    private String apellidos;
-
-    @Column(unique = true, length = 120)
-    private String correo;
-
-    @Column(length = 255)
-    private String contrasenia;
-
-    @Builder.Default
-    private Boolean activo = true;
+    @Column(length = 100)
+    private String nombre;
 }

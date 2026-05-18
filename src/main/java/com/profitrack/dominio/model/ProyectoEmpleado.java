@@ -1,4 +1,4 @@
-package com.profitrack.dominio.modelo;
+package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,34 +12,34 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
+import java.time.Instant;
 
 @Entity
-@Table(name = "detalle_planillas")
+@Table(name = "proyecto_empleados")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DetallePlanilla extends BaseEntity {
+public class ProyectoEmpleado extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "planilla_id", nullable = false)
-    private Planilla planilla;
+    @JoinColumn(name = "proyecto_id", nullable = false)
+    private Proyecto proyecto;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;
 
-    @Column(name = "sueldo_base", precision = 14, scale = 2)
-    private BigDecimal sueldoBase;
+    @Column(name = "rol_asignado", length = 100)
+    private String rolAsignado;
 
-    @Column(precision = 14, scale = 2)
-    private BigDecimal bonos;
+    @Column(name = "fecha_asignacion", columnDefinition = "timestamp with time zone")
+    private Instant fechaAsignacion;
 
-    @Column(precision = 14, scale = 2)
-    private BigDecimal descuentos;
+    @Column(name = "fecha_remocion", columnDefinition = "timestamp with time zone")
+    private Instant fechaRemocion;
 
-    @Column(name = "sueldo_final", precision = 14, scale = 2)
-    private BigDecimal sueldoFinal;
+    @Builder.Default
+    private Boolean activo = true;
 }

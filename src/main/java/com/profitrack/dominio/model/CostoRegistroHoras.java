@@ -1,4 +1,4 @@
-package com.profitrack.dominio.modelo;
+package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,27 +13,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Entity
-@Table(name = "historial_costo_hora_empleado")
+@Table(name = "costos_registro_horas")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HistorialCostoHoraEmpleado extends BaseEntity {
+public class CostoRegistroHoras extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "empleado_id", nullable = false)
-    private Empleado empleado;
+    @JoinColumn(name = "registro_horas_id", nullable = false)
+    private RegistroHoras registroHoras;
 
     @Column(name = "costo_hora", precision = 12, scale = 2)
     private BigDecimal costoHora;
 
-    @Column(name = "fecha_inicio")
-    private LocalDate fechaInicio;
+    @Column(name = "costo_total", precision = 12, scale = 2)
+    private BigDecimal costoTotal;
 
-    @Column(name = "fecha_fin")
-    private LocalDate fechaFin;
+    @Column(name = "fecha_calculo", columnDefinition = "timestamp with time zone")
+    private Instant fechaCalculo;
 }

@@ -1,6 +1,6 @@
 package com.profitrack.dominio.puerto.salida;
 
-import com.profitrack.dominio.modelo.Auditoria;
+import com.profitrack.dominio.model.Auditoria;
 
 import java.util.List;
 import java.util.Optional;

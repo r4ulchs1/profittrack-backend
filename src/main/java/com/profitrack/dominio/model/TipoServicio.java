@@ -1,9 +1,7 @@
-package com.profitrack.dominio.modelo;
+package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -14,35 +12,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 @Entity
-@Table(name = "ingresos")
+@Table(name = "tipos_servicio")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Ingreso extends BaseEntity {
+public class TipoServicio extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "proyecto_id")
-    private Proyecto proyecto;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 50)
-    private TipoIngreso tipo;
-
-    @Column(precision = 14, scale = 2)
-    private BigDecimal monto;
-
-    @Column(name = "fecha_ingreso")
-    private LocalDate fechaIngreso;
+    @Column(length = 120)
+    private String nombre;
 
     @Column(columnDefinition = "text")
     private String descripcion;

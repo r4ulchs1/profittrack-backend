@@ -1,6 +1,6 @@
 package com.profitrack.dominio.puerto.salida;
 
-import com.profitrack.dominio.modelo.BaseEntity;
+import com.profitrack.dominio.model.BaseEntity;
 
 import java.util.List;
 import java.util.Optional;

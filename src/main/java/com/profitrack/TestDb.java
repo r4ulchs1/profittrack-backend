@@ -11,6 +11,6 @@ public class TestDb {
                 "postgres.waxivkbmxwfhkwqdpaag",
                 "Camarones0902200"
         );
-        System.out.println("CONECTADO 🔥");
+        System.out.println("CONECTADO");
     }
 }

@@ -1,4 +1,4 @@
-package com.profitrack.dominio.modelo;
+package com.profitrack.dominio.model;
 
 public enum TipoIngreso {
     PAGO_PROYECTO,
