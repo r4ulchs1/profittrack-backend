@@ -34,4 +34,9 @@ public class DuenioRepositoryAdapter implements DuenioRepository {
     public boolean existePorCorreo(String correo) {
         return jpaRepository.existsByCorreo(correo);
     }
+
+    @Override
+    public Optional<Duenio> buscarPorCorreoYActivo(String correo) {
+        return jpaRepository.findByCorreoAndActivoTrue(correo);
+    }
 }

@@ -10,4 +10,5 @@ public interface DuenioRepository {
     Optional<Duenio> buscarPorId(Long id);
     List<Duenio> buscarActivosPorEmpresa(Long empresaId);
     boolean existePorCorreo(String correo);
+    Optional<Duenio> buscarPorCorreoYActivo(String correo);
 }

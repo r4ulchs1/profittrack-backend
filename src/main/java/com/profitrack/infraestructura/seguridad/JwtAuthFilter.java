@@ -1,9 +1,7 @@
-package com.profitrack.auth.filter;
+package com.profitrack.infraestructura.seguridad;
 
-import com.profitrack.auth.domain.UserSession;
-import com.profitrack.auth.exception.AuthException;
-import com.profitrack.auth.repository.UserSessionRepository;
-import com.profitrack.auth.service.TokenService;
+import com.profitrack.dominio.model.SesionUsuario;
+import com.profitrack.dominio.puerto.salida.SesionUsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -11,9 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -22,14 +19,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
+/**
+ * Filtro JWT que valida el access_token de la cookie HttpOnly.
+ * Pone el JWT como principal en el SecurityContext para que
+ * SecurityContextUtils pueda extraer los claims.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
-    private final UserSessionRepository sessionRepo;
-    private final UserDetailsService userDetailsService;
+    private final SesionUsuarioRepository sesionRepo;
 
     @Override
     protected void doFilterInternal(HttpServletRequest req,
@@ -37,27 +39,37 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
 
         String token = extractFromCookie(req, "access_token");
-        if (token == null) { chain.doFilter(req, res); return; }
+        if (token == null) {
+            chain.doFilter(req, res);
+            return;
+        }
 
         try {
             Jwt jwt = tokenService.decode(token);
             String sessionId = jwt.getClaimAsString("sessionId");
 
-            UserSession session = sessionRepo.findBySessionId(sessionId)
-                    .orElseThrow(() -> new AuthException("Session not found"));
+            // Verificar que la sesión no esté revocada
+            SesionUsuario sesion = sesionRepo.buscarPorSessionId(sessionId)
+                    .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-            if (session.isRevoked()) {
-                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session revoked");
+            if (sesion.isRevoked()) {
+                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sesión revocada");
                 return;
             }
 
-            UserDetails user = userDetailsService.loadUserByUsername(jwt.getSubject());
-            var auth = new UsernamePasswordAuthenticationToken(
-                    user, null, user.getAuthorities());
+            // Extraer rol para las authorities de Spring
+            String rolNombre = jwt.getClaimAsString("rolNombre");
+            List<SimpleGrantedAuthority> authorities = List.of(
+                    new SimpleGrantedAuthority("ROLE_" + rolNombre)
+            );
+
+            // Poner el JWT como principal (no UserDetails) para que
+            // SecurityContextUtils pueda leer los claims directamente
+            var auth = new UsernamePasswordAuthenticationToken(jwt, null, authorities);
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-        } catch (JwtException | AuthException e) {
+        } catch (RuntimeException e) {
             res.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
             return;
         }

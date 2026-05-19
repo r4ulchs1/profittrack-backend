@@ -34,4 +34,9 @@ public class EmpleadoRepositoryAdapter implements EmpleadoRepository {
     public boolean existePorCorreo(String correo) {
         return jpaRepository.existsByCorreo(correo);
     }
+
+    @Override
+    public Optional<Empleado> buscarPorCorreoYActivo(String correo) {
+        return jpaRepository.findByCorreoAndActivoTrue(correo);
+    }
 }

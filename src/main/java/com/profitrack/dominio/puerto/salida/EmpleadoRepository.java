@@ -10,4 +10,5 @@ public interface EmpleadoRepository {
     Optional<Empleado> buscarPorId(Long id);
     List<Empleado> buscarActivosPorEmpresa(Long empresaId);
     boolean existePorCorreo(String correo);
+    Optional<Empleado> buscarPorCorreoYActivo(String correo);
 }
