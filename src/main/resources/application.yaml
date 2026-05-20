@@ -3,9 +3,9 @@ spring:
     name: ProfitTrack
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/profittrack
-    username: postgres
-    password: 123
+    url: jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:5432/postgres
+    username: postgres.waxivkbmxwfhkwqdpaag
+    password: Camarones0902200
     driver-class-name: org.postgresql.Driver
 
   jpa:
