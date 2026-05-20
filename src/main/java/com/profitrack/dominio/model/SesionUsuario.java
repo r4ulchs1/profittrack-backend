@@ -35,6 +35,8 @@ public class SesionUsuario {
     @Column(nullable = false, unique = true)
     private String refreshTokenHash;
 
+    private String userType;
+
     @Builder.Default
     private boolean revoked = false;
 

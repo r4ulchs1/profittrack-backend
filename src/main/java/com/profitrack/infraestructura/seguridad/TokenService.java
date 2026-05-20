@@ -37,6 +37,11 @@ public class TokenService {
     @Value("${app.jwt.refresh-expiration-seconds}")
     private long refreshExp;
 
+    @FunctionalInterface
+    public interface TokenBuilder {
+        String build(Long userId, String sessionId, String userType);
+    }
+
     /**
      * Crea una sesión para un Empleado autenticado.
      */
@@ -47,6 +52,7 @@ public class TokenService {
 
         sesionRepo.guardar(SesionUsuario.builder()
                 .userId(empleado.getId())
+                .userType("empleado")
                 .sessionId(sessionId)
                 .refreshTokenHash(hash(rawRefresh))
                 .deviceInfo(deviceInfo)
@@ -71,6 +77,7 @@ public class TokenService {
 
         sesionRepo.guardar(SesionUsuario.builder()
                 .userId(duenio.getId())
+                .userType("duenio")
                 .sessionId(sessionId)
                 .refreshTokenHash(hash(rawRefresh))
                 .deviceInfo(deviceInfo)
@@ -90,7 +97,7 @@ public class TokenService {
      */
     @Transactional
     public String rotarSesion(String rawRefresh, HttpServletResponse res,
-            java.util.function.BiFunction<Long, String, String> tokenBuilder) {
+            TokenBuilder tokenBuilder) {
         SesionUsuario sesion = sesionRepo.buscarPorRefreshTokenHash(hash(rawRefresh))
                 .orElseThrow(() -> new RuntimeException("Refresh token inválido"));
 
@@ -103,7 +110,7 @@ public class TokenService {
         sesion.setExpiresAt(Instant.now().plusSeconds(refreshExp));
         sesionRepo.guardar(sesion);
 
-        String accessToken = tokenBuilder.apply(sesion.getUserId(), sesion.getSessionId());
+        String accessToken = tokenBuilder.build(sesion.getUserId(), sesion.getSessionId(), sesion.getUserType());
         setAccessCookie(res, accessToken);
         setRefreshCookie(res, newRawRefresh);
         return accessToken;

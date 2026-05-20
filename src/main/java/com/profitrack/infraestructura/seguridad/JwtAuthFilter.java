@@ -51,25 +51,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             SesionUsuario sesion = sesionRepo.buscarPorSessionId(sessionId)
                     .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
 
-            if (sesion.isRevoked()) {
-                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sesión revocada");
-                return;
+            if (!sesion.isRevoked()) {
+                // Extraer rol para las authorities de Spring
+                String rolNombre = jwt.getClaimAsString("rolNombre");
+                List<SimpleGrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + rolNombre));
+
+                // Poner el JWT como principal (no UserDetails) para que
+                // SecurityContextUtils pueda leer los claims directamente
+                var auth = new UsernamePasswordAuthenticationToken(jwt, null, authorities);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
-
-            // Extraer rol para las authorities de Spring
-            String rolNombre = jwt.getClaimAsString("rolNombre");
-            List<SimpleGrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority("ROLE_" + rolNombre));
-
-            // Poner el JWT como principal (no UserDetails) para que
-            // SecurityContextUtils pueda leer los claims directamente
-            var auth = new UsernamePasswordAuthenticationToken(jwt, null, authorities);
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
-        } catch (RuntimeException e) {
-            res.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
-            return;
+        } catch (Exception e) {
+            // Si el token expiró o es inválido, simplemente no autenticamos la petición.
+            // Spring Security decidirá si permite el paso (si es ruta pública) o si la bloquea.
+            logger.info("Token inválido o expirado: " + e.getMessage());
         }
 
         chain.doFilter(req, res);

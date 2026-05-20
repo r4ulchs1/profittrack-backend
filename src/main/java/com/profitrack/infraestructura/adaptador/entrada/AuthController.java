@@ -96,14 +96,25 @@ public class AuthController {
         }
 
         try {
-            tokenService.rotarSesion(rawRefresh, res, (userId, sessionId) -> {
-                Optional<Empleado> empOpt = empleadoRepo.buscarPorId(userId);
-                if (empOpt.isPresent()) {
-                    return tokenService.buildJwtEmpleado(empOpt.get(), sessionId);
+            tokenService.rotarSesion(rawRefresh, res, (userId, sessionId, userType) -> {
+                if ("empleado".equalsIgnoreCase(userType)) {
+                    Empleado emp = empleadoRepo.buscarPorId(userId)
+                            .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+                    return tokenService.buildJwtEmpleado(emp, sessionId);
+                } else if ("duenio".equalsIgnoreCase(userType)) {
+                    Duenio duenio = duenioRepo.buscarPorId(userId)
+                            .orElseThrow(() -> new RuntimeException("Dueño no encontrado"));
+                    return tokenService.buildJwtDuenio(duenio, sessionId);
+                } else {
+                    // Fallback para sesiones antiguas sin userType
+                    Optional<Empleado> empOpt = empleadoRepo.buscarPorId(userId);
+                    if (empOpt.isPresent()) {
+                        return tokenService.buildJwtEmpleado(empOpt.get(), sessionId);
+                    }
+                    Duenio duenio = duenioRepo.buscarPorId(userId)
+                            .orElseThrow(() -> new RuntimeException("Dueño no encontrado"));
+                    return tokenService.buildJwtDuenio(duenio, sessionId);
                 }
-                Duenio duenio = duenioRepo.buscarPorId(userId)
-                        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-                return tokenService.buildJwtDuenio(duenio, sessionId);
             });
 
             return ResponseEntity.ok(Map.of("mensaje", "Token renovado"));
