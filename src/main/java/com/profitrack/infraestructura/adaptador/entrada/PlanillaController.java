@@ -3,6 +3,7 @@ package com.profitrack.infraestructura.adaptador.entrada;
 import com.profitrack.aplicacion.dto.planillaDto.PlanillaRequestDto;
 import com.profitrack.aplicacion.dto.planillaDto.PlanillaResponseDto;
 import com.profitrack.dominio.puerto.entrada.PlanillaUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class PlanillaController {
 
     @PostMapping
     public ResponseEntity<PlanillaResponseDto> crear(@Valid @RequestBody PlanillaRequestDto dto) {
-        ctx.validarRol("Administrador", "Owner"); dto.setEmpresaId(ctx.getEmpresaId());
+        ctx.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.OWNER); dto.setEmpresaId(ctx.getEmpresaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.crear(dto));
     }
     @GetMapping("/{id}")

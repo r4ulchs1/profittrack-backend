@@ -7,7 +7,6 @@ import lombok.Data;
 @Data
 public class TipoServicioRequestDto {
 
-    @NotNull
     private Long empresaId;
 
     @NotBlank

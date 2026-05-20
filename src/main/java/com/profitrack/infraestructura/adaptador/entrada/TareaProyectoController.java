@@ -2,6 +2,7 @@ package com.profitrack.infraestructura.adaptador.entrada;
 
 import com.profitrack.aplicacion.dto.tareaProyectoDto.*;
 import com.profitrack.dominio.puerto.entrada.TareaProyectoUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class TareaProyectoController {
 
     @PostMapping
     public ResponseEntity<TareaProyectoResponseDto> crear(@Valid @RequestBody TareaProyectoRequestDto dto) {
-        ctx.validarRol("PM", "Gerente", "Owner");
+        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.crear(dto));
     }
     @GetMapping("/proyecto/{proyectoId}")
@@ -26,12 +27,12 @@ public class TareaProyectoController {
     }
     @PatchMapping("/{id}")
     public ResponseEntity<TareaProyectoResponseDto> actualizar(@PathVariable Long id, @RequestBody @Valid TareaProyectoPatchDto dto) {
-        ctx.validarRol("PM", "Gerente", "Owner");
+        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.actualizar(id, dto));
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        ctx.validarRol("PM", "Gerente", "Owner");
+        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         useCase.eliminar(id); return ResponseEntity.noContent().build();
     }
 }

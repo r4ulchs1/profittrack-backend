@@ -4,7 +4,6 @@ import com.profitrack.dominio.model.Duenio;
 import com.profitrack.dominio.model.Empleado;
 import com.profitrack.dominio.model.SesionUsuario;
 import com.profitrack.dominio.puerto.salida.SesionUsuarioRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,7 +90,7 @@ public class TokenService {
      */
     @Transactional
     public String rotarSesion(String rawRefresh, HttpServletResponse res,
-                            java.util.function.BiFunction<Long, String, String> tokenBuilder) {
+            java.util.function.BiFunction<Long, String, String> tokenBuilder) {
         SesionUsuario sesion = sesionRepo.buscarPorRefreshTokenHash(hash(rawRefresh))
                 .orElseThrow(() -> new RuntimeException("Refresh token inválido"));
 

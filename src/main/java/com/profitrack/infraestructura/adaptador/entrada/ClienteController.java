@@ -4,6 +4,7 @@ import com.profitrack.aplicacion.dto.clienteDto.ClientePatchDto;
 import com.profitrack.aplicacion.dto.clienteDto.ClienteRequestDto;
 import com.profitrack.aplicacion.dto.clienteDto.ClienteResponseDto;
 import com.profitrack.dominio.puerto.entrada.ClienteUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class ClienteController {
 
     @PostMapping
     public ResponseEntity<ClienteResponseDto> crear(@Valid @RequestBody ClienteRequestDto dto) {
-        securityContext.validarRol("Administrador", "PM", "Owner");
+        securityContext.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.PM, RolConstantes.OWNER);
         dto.setEmpresaId(securityContext.getEmpresaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteUseCase.crear(dto));
     }
@@ -47,13 +48,13 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDto> actualizar(
             @PathVariable Long id,
             @RequestBody @Valid ClientePatchDto dto) {
-        securityContext.validarRol("Administrador", "PM", "Owner");
+        securityContext.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.PM, RolConstantes.OWNER);
         return ResponseEntity.ok(clienteUseCase.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        securityContext.validarRol("Administrador", "Owner");
+        securityContext.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.OWNER);
         clienteUseCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }

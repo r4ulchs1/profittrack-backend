@@ -3,6 +3,7 @@ package com.profitrack.infraestructura.adaptador.entrada;
 import com.profitrack.aplicacion.dto.ingresoDto.IngresoRequestDto;
 import com.profitrack.aplicacion.dto.ingresoDto.IngresoResponseDto;
 import com.profitrack.dominio.puerto.entrada.IngresoUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class IngresoController {
 
     @PostMapping
     public ResponseEntity<IngresoResponseDto> crear(@Valid @RequestBody IngresoRequestDto dto) {
-        ctx.validarRol("Gerente", "Owner"); dto.setEmpresaId(ctx.getEmpresaId());
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.OWNER); dto.setEmpresaId(ctx.getEmpresaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.crear(dto));
     }
     @GetMapping
@@ -27,7 +28,7 @@ public class IngresoController {
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        ctx.validarRol("Gerente", "Owner"); useCase.eliminar(id);
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.OWNER); useCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }

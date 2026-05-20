@@ -3,6 +3,7 @@ package com.profitrack.infraestructura.adaptador.entrada;
 import com.profitrack.aplicacion.dto.registroHorasDto.RegistroHorasRequestDto;
 import com.profitrack.aplicacion.dto.registroHorasDto.RegistroHorasResponseDto;
 import com.profitrack.dominio.puerto.entrada.RegistroHorasUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +36,13 @@ public class RegistroHorasController {
 
     @PatchMapping("/{id}/aprobar")
     public ResponseEntity<RegistroHorasResponseDto> aprobar(@PathVariable Long id) {
-        ctx.validarRol("PM", "Gerente", "Owner");
+        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.aprobar(id));
     }
 
     @PatchMapping("/{id}/rechazar")
     public ResponseEntity<RegistroHorasResponseDto> rechazar(@PathVariable Long id) {
-        ctx.validarRol("PM", "Gerente", "Owner");
+        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.rechazar(id));
     }
 

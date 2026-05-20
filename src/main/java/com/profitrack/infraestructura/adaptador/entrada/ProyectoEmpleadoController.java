@@ -3,6 +3,7 @@ package com.profitrack.infraestructura.adaptador.entrada;
 import com.profitrack.aplicacion.dto.proyectoEmpleadoDto.ProyectoEmpleadoRequestDto;
 import com.profitrack.aplicacion.dto.proyectoEmpleadoDto.ProyectoEmpleadoResponseDto;
 import com.profitrack.dominio.puerto.entrada.ProyectoEmpleadoUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class ProyectoEmpleadoController {
 
     @PostMapping
     public ResponseEntity<ProyectoEmpleadoResponseDto> asignar(@Valid @RequestBody ProyectoEmpleadoRequestDto dto) {
-        securityContext.validarRol("PM", "Gerente", "Owner");
+        securityContext.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.asignar(dto));
     }
 
@@ -31,7 +32,7 @@ public class ProyectoEmpleadoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remover(@PathVariable Long id) {
-        securityContext.validarRol("PM", "Gerente", "Owner");
+        securityContext.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         useCase.remover(id);
         return ResponseEntity.noContent().build();
     }
