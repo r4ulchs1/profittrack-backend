@@ -35,8 +35,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest req,
-                                    HttpServletResponse res,
-                                    FilterChain chain) throws ServletException, IOException {
+            HttpServletResponse res,
+            FilterChain chain) throws ServletException, IOException {
 
         String token = extractFromCookie(req, "access_token");
         if (token == null) {
@@ -60,8 +60,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // Extraer rol para las authorities de Spring
             String rolNombre = jwt.getClaimAsString("rolNombre");
             List<SimpleGrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority("ROLE_" + rolNombre)
-            );
+                    new SimpleGrantedAuthority("ROLE_" + rolNombre));
 
             // Poner el JWT como principal (no UserDetails) para que
             // SecurityContextUtils pueda leer los claims directamente
@@ -78,7 +77,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private String extractFromCookie(HttpServletRequest req, String name) {
-        if (req.getCookies() == null) return null;
+        if (req.getCookies() == null)
+            return null;
         return Arrays.stream(req.getCookies())
                 .filter(c -> name.equals(c.getName()))
                 .map(Cookie::getValue)

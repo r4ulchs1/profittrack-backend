@@ -1,0 +1,9 @@
+
+services:
+  profittrack:
+    build: .
+    container_name: profittrack-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=America/Lima
