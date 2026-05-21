@@ -6,4 +6,5 @@ public interface IngresoRepository {
     Ingreso guardar(Ingreso i);
     Optional<Ingreso> buscarPorId(Long id);
     List<Ingreso> buscarActivosPorEmpresa(Long empresaId);
+    List<Ingreso> buscarActivosPorProyecto(Long proyectoId);
 }

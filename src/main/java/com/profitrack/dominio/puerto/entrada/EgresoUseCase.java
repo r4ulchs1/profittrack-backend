@@ -5,5 +5,6 @@ import java.util.List;
 public interface EgresoUseCase {
     EgresoResponseDto crear(EgresoRequestDto dto);
     List<EgresoResponseDto> listarPorEmpresa(Long empresaId);
+    List<EgresoResponseDto> listarPorProyecto(Long proyectoId);
     void eliminar(Long id);
 }

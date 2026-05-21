@@ -12,4 +12,5 @@ public class ProyectoEmpleadoRepositoryAdapter implements ProyectoEmpleadoReposi
     @Override public ProyectoEmpleado guardar(ProyectoEmpleado pe) { return jpa.save(pe); }
     @Override public Optional<ProyectoEmpleado> buscarPorId(Long id) { return jpa.findById(id); }
     @Override public List<ProyectoEmpleado> buscarActivosPorProyecto(Long proyectoId) { return jpa.findAllByProyectoIdAndActivoTrue(proyectoId); }
+    @Override public List<ProyectoEmpleado> buscarActivosPorEmpleado(Long empleadoId) { return jpa.findAllByEmpleadoIdAndActivoTrue(empleadoId); }
 }

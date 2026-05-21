@@ -26,6 +26,10 @@ public class IngresoController {
     public ResponseEntity<List<IngresoResponseDto>> listar() {
         return ResponseEntity.ok(useCase.listarPorEmpresa(ctx.getEmpresaId()));
     }
+    @GetMapping("/proyecto/{proyectoId}")
+    public ResponseEntity<List<IngresoResponseDto>> listarPorProyecto(@PathVariable Long proyectoId) {
+        return ResponseEntity.ok(useCase.listarPorProyecto(proyectoId));
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         ctx.validarRol(RolConstantes.GERENTE, RolConstantes.OWNER); useCase.eliminar(id);

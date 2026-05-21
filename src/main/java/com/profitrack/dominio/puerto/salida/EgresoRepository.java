@@ -6,4 +6,5 @@ public interface EgresoRepository {
     Egreso guardar(Egreso e);
     Optional<Egreso> buscarPorId(Long id);
     List<Egreso> buscarActivosPorEmpresa(Long empresaId);
+    List<Egreso> buscarActivosPorProyecto(Long proyectoId);
 }

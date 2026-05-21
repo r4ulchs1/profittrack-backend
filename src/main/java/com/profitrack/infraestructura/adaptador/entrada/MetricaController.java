@@ -1,44 +1,38 @@
 package com.profitrack.infraestructura.adaptador.entrada;
 
-import com.profitrack.dominio.model.MetricaProyecto;
-import com.profitrack.dominio.puerto.salida.MetricaProyectoRepository;
+import com.profitrack.aplicacion.dto.metricaDto.MetricaSnapshotResponseDto;
+import com.profitrack.aplicacion.dto.metricaDto.RentabilidadResponseDto;
+import com.profitrack.dominio.puerto.entrada.MetricaUseCase;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
 import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
-@RestController @RequestMapping("/api/metricas") @RequiredArgsConstructor
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/metricas")
+@RequiredArgsConstructor
 public class MetricaController {
-    private final MetricaProyectoRepository metricaRepo;
+
+    private final MetricaUseCase metricaUseCase;
     private final SecurityContextUtils ctx;
 
+    @PostMapping("/proyecto/{proyectoId}/snapshot")
+    public ResponseEntity<MetricaSnapshotResponseDto> generarSnapshot(@PathVariable Long proyectoId) {
+        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        return ResponseEntity.status(HttpStatus.CREATED).body(metricaUseCase.generarSnapshot(proyectoId));
+    }
+
     @GetMapping("/proyecto/{proyectoId}")
-    public ResponseEntity<List<MetricaDto>> porProyecto(@PathVariable Long proyectoId) {
-        return ResponseEntity.ok(metricaRepo.buscarPorProyecto(proyectoId).stream()
-                .map(this::toDto).collect(Collectors.toList()));
+    public ResponseEntity<List<MetricaSnapshotResponseDto>> porProyecto(@PathVariable Long proyectoId) {
+        return ResponseEntity.ok(metricaUseCase.listarPorProyecto(proyectoId));
     }
 
-    @Data @Builder
-    public static class MetricaDto {
-        private Long id; private Long proyectoId; private LocalDate fechaSnapshot;
-        private BigDecimal costoPlanificado; private BigDecimal costoReal;
-        private BigDecimal ingresoPlanificado; private BigDecimal ingresoReal;
-        private BigDecimal margenPlanificado; private BigDecimal margenReal;
-        private BigDecimal horasPlanificadas; private BigDecimal horasReales;
-    }
-
-    private MetricaDto toDto(MetricaProyecto m) {
-        return MetricaDto.builder().id(m.getId()).proyectoId(m.getProyecto().getId())
-                .fechaSnapshot(m.getFechaSnapshot())
-                .costoPlanificado(m.getCostoPlanificado()).costoReal(m.getCostoReal())
-                .ingresoPlanificado(m.getIngresoPlanificado()).ingresoReal(m.getIngresoReal())
-                .margenPlanificado(m.getMargenPlanificado()).margenReal(m.getMargenReal())
-                .horasPlanificadas(m.getHorasPlanificadas()).horasReales(m.getHorasReales()).build();
+    @GetMapping("/proyecto/{proyectoId}/actual")
+    public ResponseEntity<RentabilidadResponseDto> rentabilidadActual(@PathVariable Long proyectoId) {
+        return ResponseEntity.ok(metricaUseCase.calcularRentabilidadActual(proyectoId));
     }
 }

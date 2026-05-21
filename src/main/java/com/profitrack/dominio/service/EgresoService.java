@@ -33,6 +33,10 @@ public class EgresoService implements EgresoUseCase {
         return egresoRepo.buscarActivosPorEmpresa(empresaId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Override public List<EgresoResponseDto> listarPorProyecto(Long proyectoId) {
+        return egresoRepo.buscarActivosPorProyecto(proyectoId).stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @Override public void eliminar(Long id) {
         Egreso e = egresoRepo.buscarPorId(id).orElseThrow(() -> new RuntimeException("Egreso no encontrado"));
         e.setActivo(false); egresoRepo.guardar(e);

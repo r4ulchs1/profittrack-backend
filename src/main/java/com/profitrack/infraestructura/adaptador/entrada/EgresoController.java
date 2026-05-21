@@ -31,6 +31,11 @@ public class EgresoController {
         return ResponseEntity.ok(useCase.listarPorEmpresa(ctx.getEmpresaId()));
     }
 
+    @GetMapping("/proyecto/{proyectoId}")
+    public ResponseEntity<List<EgresoResponseDto>> listarPorProyecto(@PathVariable Long proyectoId) {
+        return ResponseEntity.ok(useCase.listarPorProyecto(proyectoId));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         ctx.validarRol("Gerente", "Owner");

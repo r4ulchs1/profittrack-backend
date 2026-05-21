@@ -32,6 +32,10 @@ public class IngresoService implements IngresoUseCase {
         return ingresoRepo.buscarActivosPorEmpresa(empresaId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Override public List<IngresoResponseDto> listarPorProyecto(Long proyectoId) {
+        return ingresoRepo.buscarActivosPorProyecto(proyectoId).stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @Override public void eliminar(Long id) {
         Ingreso i = ingresoRepo.buscarPorId(id).orElseThrow(() -> new RuntimeException("Ingreso no encontrado"));
         i.setActivo(false); ingresoRepo.guardar(i);

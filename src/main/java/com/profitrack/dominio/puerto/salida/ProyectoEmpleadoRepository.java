@@ -6,4 +6,5 @@ public interface ProyectoEmpleadoRepository {
     ProyectoEmpleado guardar(ProyectoEmpleado pe);
     Optional<ProyectoEmpleado> buscarPorId(Long id);
     List<ProyectoEmpleado> buscarActivosPorProyecto(Long proyectoId);
+    List<ProyectoEmpleado> buscarActivosPorEmpleado(Long empleadoId);
 }

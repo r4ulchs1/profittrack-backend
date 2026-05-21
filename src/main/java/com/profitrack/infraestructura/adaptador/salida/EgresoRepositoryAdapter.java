@@ -12,4 +12,5 @@ public class EgresoRepositoryAdapter implements EgresoRepository {
     @Override public Egreso guardar(Egreso e) { return jpa.save(e); }
     @Override public Optional<Egreso> buscarPorId(Long id) { return jpa.findById(id); }
     @Override public List<Egreso> buscarActivosPorEmpresa(Long empresaId) { return jpa.findAllByEmpresaIdAndActivoTrue(empresaId); }
+    @Override public List<Egreso> buscarActivosPorProyecto(Long proyectoId) { return jpa.findAllByProyectoIdAndActivoTrue(proyectoId); }
 }

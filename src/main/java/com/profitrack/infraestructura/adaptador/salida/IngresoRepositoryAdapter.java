@@ -12,4 +12,5 @@ public class IngresoRepositoryAdapter implements IngresoRepository {
     @Override public Ingreso guardar(Ingreso i) { return jpa.save(i); }
     @Override public Optional<Ingreso> buscarPorId(Long id) { return jpa.findById(id); }
     @Override public List<Ingreso> buscarActivosPorEmpresa(Long empresaId) { return jpa.findAllByEmpresaIdAndActivoTrue(empresaId); }
+    @Override public List<Ingreso> buscarActivosPorProyecto(Long proyectoId) { return jpa.findAllByProyectoIdAndActivoTrue(proyectoId); }
 }
