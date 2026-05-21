@@ -133,6 +133,7 @@ public class MetricaService implements MetricaUseCase {
 
     private BigDecimal calcularCostoLaboral(Long proyectoId) {
         return costoRegistroRepo.buscarPorProyecto(proyectoId).stream()
+                .filter(c -> c.getRegistroHoras() != null && Boolean.TRUE.equals(c.getRegistroHoras().getAprobado()))
                 .map(c -> safeValue(c.getCostoTotal()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

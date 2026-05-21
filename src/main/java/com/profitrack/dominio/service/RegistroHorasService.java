@@ -65,6 +65,9 @@ public class RegistroHorasService implements RegistroHorasUseCase {
         rhRepo.guardar(rh);
 
         // HU-08: Calcular costo automáticamente al aprobar
+        // Limpiar cualquier cálculo previo de costo para este registro
+        costoRhRepo.eliminarPorRegistroHoras(id);
+
         BigDecimal costoHora = costoEmpRepo.buscarActivoPorProyectoYEmpleado(
                         rh.getProyecto().getId(), rh.getEmpleado().getId())
                 .map(ProyectoCostoEmpleado::getCostoHora)
@@ -89,6 +92,10 @@ public class RegistroHorasService implements RegistroHorasUseCase {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
         rh.setAprobado(false);
+        
+        // Al rechazar, eliminamos el costo calculado para este registro de horas
+        costoRhRepo.eliminarPorRegistroHoras(id);
+        
         return toDto(rhRepo.guardar(rh));
     }
 

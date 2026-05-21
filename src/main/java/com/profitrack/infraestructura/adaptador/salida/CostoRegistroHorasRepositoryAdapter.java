@@ -11,4 +11,6 @@ public class CostoRegistroHorasRepositoryAdapter implements CostoRegistroHorasRe
     @Override public CostoRegistroHoras guardar(CostoRegistroHoras c) { return jpa.save(c); }
     @Override public List<CostoRegistroHoras> buscarPorProyecto(Long proyectoId) { return jpa.findAllByRegistroHorasProyectoId(proyectoId); }
     @Override public List<CostoRegistroHoras> buscarPorEmpleado(Long empleadoId) { return jpa.findAllByRegistroHorasEmpleadoId(empleadoId); }
+    @Override public void eliminarPorRegistroHoras(Long registroHorasId) { jpa.deleteByRegistroHorasId(registroHorasId); }
 }
+

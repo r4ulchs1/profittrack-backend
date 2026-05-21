@@ -5,4 +5,6 @@ import java.util.List;
 public interface CostoRegistroHorasJpaRepository extends JpaRepository<CostoRegistroHoras, Long> {
     List<CostoRegistroHoras> findAllByRegistroHorasProyectoId(Long proyectoId);
     List<CostoRegistroHoras> findAllByRegistroHorasEmpleadoId(Long empleadoId);
+    void deleteByRegistroHorasId(Long registroHorasId);
 }
+
