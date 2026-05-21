@@ -23,6 +23,7 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     private final EmpleadoRepository empleadoRepo;
     private final ProyectoCostoEmpleadoRepository costoEmpRepo;
     private final CostoRegistroHorasRepository costoRhRepo;
+    private final TareaProyectoRepository tareaRepo;
 
     @Override
     @Transactional
@@ -61,10 +62,12 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public RegistroHorasResponseDto aprobar(Long id) {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
+        if (Boolean.TRUE.equals(rh.getAprobado())) {
+            return toDto(rh);
+        }
         rh.setAprobado(true);
         rhRepo.guardar(rh);
 
-        // HU-08: Calcular costo automáticamente al aprobar
         // Limpiar cualquier cálculo previo de costo para este registro
         costoRhRepo.eliminarPorRegistroHoras(id);
 
@@ -73,8 +76,35 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .map(ProyectoCostoEmpleado::getCostoHora)
                 .orElse(BigDecimal.ZERO);
 
-        BigDecimal costoTotal = costoHora.multiply(
-                rh.getHorasTrabajadas() != null ? rh.getHorasTrabajadas() : BigDecimal.ZERO);
+        BigDecimal costoTotal;
+        BigDecimal horasTrabajadas = rh.getHorasTrabajadas() != null ? rh.getHorasTrabajadas() : BigDecimal.ZERO;
+
+        if (rh.getTarea() != null) {
+            List<RegistroHoras> approvedForTask = rhRepo.buscarActivosPorTarea(rh.getTarea().getId()).stream()
+                    .filter(r -> Boolean.TRUE.equals(r.getAprobado()) && !r.getId().equals(rh.getId()))
+                    .toList();
+
+            BigDecimal previouslyApprovedHours = approvedForTask.stream()
+                    .map(r -> r.getHorasTrabajadas() != null ? r.getHorasTrabajadas() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal horasPlanificadas = rh.getTarea().getHorasPlanificadas() != null 
+                    ? rh.getTarea().getHorasPlanificadas() 
+                    : BigDecimal.ZERO;
+
+            BigDecimal remainingHours = horasPlanificadas.subtract(previouslyApprovedHours);
+            if (remainingHours.compareTo(BigDecimal.ZERO) < 0) {
+                remainingHours = BigDecimal.ZERO;
+            }
+            BigDecimal horasParaCosto = horasTrabajadas.min(remainingHours);
+            costoTotal = costoHora.multiply(horasParaCosto);
+
+            BigDecimal newHorasReales = previouslyApprovedHours.add(horasTrabajadas);
+            rh.getTarea().setHorasReales(newHorasReales);
+            tareaRepo.guardar(rh.getTarea());
+        } else {
+            costoTotal = costoHora.multiply(horasTrabajadas);
+        }
 
         costoRhRepo.guardar(CostoRegistroHoras.builder()
                 .registroHoras(rh)
@@ -91,10 +121,24 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public RegistroHorasResponseDto rechazar(Long id) {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
+        if (!Boolean.TRUE.equals(rh.getAprobado())) {
+            return toDto(rh);
+        }
         rh.setAprobado(false);
         
         // Al rechazar, eliminamos el costo calculado para este registro de horas
         costoRhRepo.eliminarPorRegistroHoras(id);
+        
+        if (rh.getTarea() != null) {
+            List<RegistroHoras> approvedForTask = rhRepo.buscarActivosPorTarea(rh.getTarea().getId()).stream()
+                    .filter(r -> Boolean.TRUE.equals(r.getAprobado()) && !r.getId().equals(rh.getId()))
+                    .toList();
+            BigDecimal newHorasReales = approvedForTask.stream()
+                    .map(r -> r.getHorasTrabajadas() != null ? r.getHorasTrabajadas() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            rh.getTarea().setHorasReales(newHorasReales);
+            tareaRepo.guardar(rh.getTarea());
+        }
         
         return toDto(rhRepo.guardar(rh));
     }
@@ -104,8 +148,23 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public void eliminar(Long id) {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
+        boolean wasAprobado = Boolean.TRUE.equals(rh.getAprobado());
         rh.setActivo(false);
         rhRepo.guardar(rh);
+        
+        if (wasAprobado) {
+            costoRhRepo.eliminarPorRegistroHoras(id);
+            if (rh.getTarea() != null) {
+                List<RegistroHoras> approvedForTask = rhRepo.buscarActivosPorTarea(rh.getTarea().getId()).stream()
+                        .filter(r -> Boolean.TRUE.equals(r.getAprobado()) && !r.getId().equals(rh.getId()))
+                        .toList();
+                BigDecimal newHorasReales = approvedForTask.stream()
+                        .map(r -> r.getHorasTrabajadas() != null ? r.getHorasTrabajadas() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                rh.getTarea().setHorasReales(newHorasReales);
+                tareaRepo.guardar(rh.getTarea());
+            }
+        }
     }
 
     @Override

@@ -6,4 +6,5 @@ public interface RegistroHorasJpaRepository extends JpaRepository<RegistroHoras,
     List<RegistroHoras> findAllByProyectoIdAndActivoTrue(Long proyectoId);
     List<RegistroHoras> findAllByEmpleadoIdAndActivoTrue(Long empleadoId);
     List<RegistroHoras> findAllByProyectoEmpresaIdAndActivoTrue(Long empresaId);
+    List<RegistroHoras> findAllByTareaIdAndActivoTrue(Long tareaId);
 }

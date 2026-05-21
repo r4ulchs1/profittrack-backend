@@ -8,4 +8,5 @@ public interface RegistroHorasRepository {
     List<RegistroHoras> buscarActivosPorProyecto(Long proyectoId);
     List<RegistroHoras> buscarActivosPorEmpleado(Long empleadoId);
     List<RegistroHoras> buscarActivosPorEmpresa(Long empresaId);
+    List<RegistroHoras> buscarActivosPorTarea(Long tareaId);
 }

@@ -21,6 +21,7 @@ public class ProyectoService implements ProyectoUseCase {
     private final ClienteRepository clienteRepository;
     private final TipoServicioRepository tipoServicioRepository;
     private final EmpleadoRepository empleadoRepository;
+    private final ProyectoEmpleadoRepository proyectoEmpleadoRepository;
 
     @Override
     public ProyectoResponseDto crear(ProyectoRequestDto dto) {
@@ -85,6 +86,34 @@ public class ProyectoService implements ProyectoUseCase {
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProyectoResponseDto> listarProyectosAsignados(Long empleadoId, Long empresaId) {
+        List<Proyecto> asignados = proyectoEmpleadoRepository.buscarActivosPorEmpleado(empleadoId).stream()
+                .map(ProyectoEmpleado::getProyecto)
+                .filter(Proyecto::getActivo)
+                .filter(p -> p.getEmpresa().getId().equals(empresaId))
+                .collect(Collectors.toList());
+
+        List<Proyecto> liderados = proyectoRepository.buscarActivosPorEmpresa(empresaId).stream()
+                .filter(p -> p.getLiderEmpleado() != null && p.getLiderEmpleado().getId().equals(empleadoId))
+                .collect(Collectors.toList());
+
+        java.util.Set<Long> ids = new java.util.HashSet<>();
+        List<Proyecto> todos = new java.util.ArrayList<>();
+        for (Proyecto p : asignados) {
+            if (ids.add(p.getId())) {
+                todos.add(p);
+            }
+        }
+        for (Proyecto p : liderados) {
+            if (ids.add(p.getId())) {
+                todos.add(p);
+            }
+        }
+
+        return todos.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -60,6 +62,7 @@ public class TareaProyecto extends BaseEntity {
     @Column(name = "fecha_fin_real")
     private LocalDate fechaFinReal;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    private String estado;
+    private EstadoTarea estado;
 }

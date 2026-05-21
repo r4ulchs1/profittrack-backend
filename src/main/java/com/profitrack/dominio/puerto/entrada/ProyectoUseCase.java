@@ -14,4 +14,5 @@ public interface ProyectoUseCase {
     ProyectoResponseDto actualizar(Long id, ProyectoPatchDto dto);
     void eliminar(Long id);
     ProyectoResponseDto reactivar(Long id);
+    List<ProyectoResponseDto> listarProyectosAsignados(Long empleadoId, Long empresaId);
 }

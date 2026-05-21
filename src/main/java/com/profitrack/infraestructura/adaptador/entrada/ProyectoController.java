@@ -41,7 +41,28 @@ public class ProyectoController {
     @GetMapping
     public ResponseEntity<List<ProyectoResponseDto>> listarPorEmpresa() {
         Long empresaId = securityContext.getEmpresaId();
-        return ResponseEntity.ok(proyectoUseCase.listarActivosPorEmpresa(empresaId));
+        String rol = securityContext.getRolNombre();
+        String tipo = securityContext.getTipo();
+
+        boolean esAdmin = "duenio".equalsIgnoreCase(tipo) ||
+                RolConstantes.OWNER.equalsIgnoreCase(rol) ||
+                RolConstantes.GERENTE.equalsIgnoreCase(rol) ||
+                RolConstantes.PM.equalsIgnoreCase(rol) ||
+                RolConstantes.ADMINISTRADOR.equalsIgnoreCase(rol);
+
+        if (esAdmin) {
+            return ResponseEntity.ok(proyectoUseCase.listarActivosPorEmpresa(empresaId));
+        } else {
+            Long empleadoId = securityContext.getUserId();
+            return ResponseEntity.ok(proyectoUseCase.listarProyectosAsignados(empleadoId, empresaId));
+        }
+    }
+
+    @GetMapping("/mis-proyectos")
+    public ResponseEntity<List<ProyectoResponseDto>> listarMisProyectos() {
+        Long empresaId = securityContext.getEmpresaId();
+        Long empleadoId = securityContext.getUserId();
+        return ResponseEntity.ok(proyectoUseCase.listarProyectosAsignados(empleadoId, empresaId));
     }
 
     @GetMapping("/inactivos")

@@ -14,4 +14,5 @@ public class RegistroHorasRepositoryAdapter implements RegistroHorasRepository {
     @Override public List<RegistroHoras> buscarActivosPorProyecto(Long proyectoId) { return jpa.findAllByProyectoIdAndActivoTrue(proyectoId); }
     @Override public List<RegistroHoras> buscarActivosPorEmpleado(Long empleadoId) { return jpa.findAllByEmpleadoIdAndActivoTrue(empleadoId); }
     @Override public List<RegistroHoras> buscarActivosPorEmpresa(Long empresaId) { return jpa.findAllByProyectoEmpresaIdAndActivoTrue(empresaId); }
+    @Override public List<RegistroHoras> buscarActivosPorTarea(Long tareaId) { return jpa.findAllByTareaIdAndActivoTrue(tareaId); }
 }

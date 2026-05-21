@@ -26,7 +26,7 @@ public class TareaProyectoService implements TareaProyectoUseCase {
                 .horasPlanificadas(dto.getHorasPlanificadas())
                 .fechaInicioPlanificada(dto.getFechaInicioPlanificada())
                 .fechaFinPlanificada(dto.getFechaFinPlanificada())
-                .estado("PENDIENTE").build());
+                .estado(EstadoTarea.PENDIENTE).build());
         return toDto(t);
     }
 
@@ -53,7 +53,7 @@ public class TareaProyectoService implements TareaProyectoUseCase {
         if (dto.getFechaFinPlanificada() != null) t.setFechaFinPlanificada(dto.getFechaFinPlanificada());
         if (dto.getFechaInicioReal() != null) t.setFechaInicioReal(dto.getFechaInicioReal());
         if (dto.getFechaFinReal() != null) t.setFechaFinReal(dto.getFechaFinReal());
-        if (dto.getEstado() != null) t.setEstado(dto.getEstado());
+        if (dto.getEstado() != null) t.setEstado(EstadoTarea.valueOf(dto.getEstado()));
         if (dto.getTipoTareaId() != null) t.setTipoTarea(tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null));
         if (dto.getEmpleadoAsignadoId() != null) t.setEmpleadoAsignado(empleadoRepo.buscarPorId(dto.getEmpleadoAsignadoId()).orElse(null));
         return toDto(tareaRepo.guardar(t));
@@ -74,6 +74,6 @@ public class TareaProyectoService implements TareaProyectoUseCase {
                 .horasPlanificadas(t.getHorasPlanificadas()).horasReales(t.getHorasReales())
                 .fechaInicioPlanificada(t.getFechaInicioPlanificada()).fechaFinPlanificada(t.getFechaFinPlanificada())
                 .fechaInicioReal(t.getFechaInicioReal()).fechaFinReal(t.getFechaFinReal())
-                .estado(t.getEstado()).activo(t.getActivo()).build();
+                .estado(t.getEstado() != null ? t.getEstado().name() : null).activo(t.getActivo()).build();
     }
 }
