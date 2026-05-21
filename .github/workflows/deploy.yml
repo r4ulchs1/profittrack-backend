@@ -17,15 +17,21 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
+          envs: DB_URL,DB_USER,DB_PASSWORD,JWT_SECRET
+          with:
+            DB_URL: ${{ secrets.DB_URL }}
+            DB_USER: ${{ secrets.DB_USER }}
+            DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+            JWT_SECRET: ${{ secrets.JWT_SECRET }}
           script: |
             cd /opt/apps/profittrack-backend
 
             git pull origin main
 
             echo "PORT=8080" > .env
-            echo "DATABASE_URL=${{ secrets.DB_URL }}" >> .env
-            echo "DATABASE_USER=${{ secrets.DB_USER }}" >> .env
-            echo "DATABASE_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "DATABASE_URL=$DB_URL" >> .env
+            echo "DATABASE_USER=$DB_USER" >> .env
+            echo "DATABASE_PASSWORD=$DB_PASSWORD" >> .env
+            echo "JWT_SECRET=$JWT_SECRET" >> .env
 
             docker compose up -d --build
