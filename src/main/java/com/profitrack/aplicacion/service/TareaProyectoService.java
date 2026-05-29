@@ -6,6 +6,8 @@ import com.profitrack.aplicacion.puerto.entrada.TareaProyectoUseCase;
 import com.profitrack.dominio.puerto.salida.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,18 +18,21 @@ public class TareaProyectoService implements TareaProyectoUseCase {
     private final ProyectoRepository proyectoRepo;
     private final TipoTareaRepository tipoTareaRepo;
     private final EmpleadoRepository empleadoRepo;
+    private final EtapaProyectoRepository etapaRepo;
 
     @Override
     public TareaProyectoResponseDto crear(TareaProyectoRequestDto dto) {
         Proyecto p = proyectoRepo.buscarPorId(dto.getProyectoId())
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+        EtapaProyecto etapa = obtenerEtapaValida(dto.getEtapaProyectoId(), p);
+        validarHorasEtapa(etapa, dto.getHorasPlanificadas(), null);
         TipoTarea tt = dto.getTipoTareaId() != null ? tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null)
                 : null;
         Empleado emp = dto.getEmpleadoAsignadoId() != null
                 ? empleadoRepo.buscarPorId(dto.getEmpleadoAsignadoId()).orElse(null)
                 : null;
         TareaProyecto t = tareaRepo.guardar(TareaProyecto.builder()
-                .proyecto(p).tipoTarea(tt).empleadoAsignado(emp)
+                .proyecto(p).etapaProyecto(etapa).tipoTarea(tt).empleadoAsignado(emp)
                 .nombre(dto.getNombre()).descripcion(dto.getDescripcion())
                 .horasPlanificadas(dto.getHorasPlanificadas())
                 .fechaInicioPlanificada(dto.getFechaInicioPlanificada())
@@ -56,6 +61,17 @@ public class TareaProyectoService implements TareaProyectoUseCase {
     @Override
     public TareaProyectoResponseDto actualizar(Long id, TareaProyectoPatchDto dto) {
         TareaProyecto t = tareaRepo.buscarPorId(id).orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+
+        EtapaProyecto etapa = t.getEtapaProyecto();
+        if (dto.getEtapaProyectoId() != null) {
+            etapa = obtenerEtapaValida(dto.getEtapaProyectoId(), t.getProyecto());
+        }
+
+        BigDecimal horasPlanificadas = dto.getHorasPlanificadas() != null
+                ? dto.getHorasPlanificadas()
+                : t.getHorasPlanificadas();
+        validarHorasEtapa(etapa, horasPlanificadas, t.getId());
+
         if (dto.getNombre() != null)
             t.setNombre(dto.getNombre());
         if (dto.getDescripcion() != null)
@@ -74,6 +90,8 @@ public class TareaProyectoService implements TareaProyectoUseCase {
             t.setEstado(EstadoTarea.valueOf(dto.getEstado()));
         if (dto.getTipoTareaId() != null)
             t.setTipoTarea(tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null));
+        if (dto.getEtapaProyectoId() != null)
+            t.setEtapaProyecto(etapa);
         if (dto.getEmpleadoAsignadoId() != null)
             t.setEmpleadoAsignado(empleadoRepo.buscarPorId(dto.getEmpleadoAsignadoId()).orElse(null));
         return toDto(tareaRepo.guardar(t));
@@ -88,6 +106,8 @@ public class TareaProyectoService implements TareaProyectoUseCase {
 
     private TareaProyectoResponseDto toDto(TareaProyecto t) {
         return TareaProyectoResponseDto.builder().id(t.getId()).proyectoId(t.getProyecto().getId())
+                .etapaProyectoId(t.getEtapaProyecto() != null ? t.getEtapaProyecto().getId() : null)
+                .etapaProyectoNombre(t.getEtapaProyecto() != null ? t.getEtapaProyecto().getNombre() : null)
                 .tipoTareaId(t.getTipoTarea() != null ? t.getTipoTarea().getId() : null)
                 .tipoTareaNombre(t.getTipoTarea() != null ? t.getTipoTarea().getNombre() : null)
                 .empleadoAsignadoId(t.getEmpleadoAsignado() != null ? t.getEmpleadoAsignado().getId() : null)
@@ -99,5 +119,33 @@ public class TareaProyectoService implements TareaProyectoUseCase {
                 .fechaInicioPlanificada(t.getFechaInicioPlanificada()).fechaFinPlanificada(t.getFechaFinPlanificada())
                 .fechaInicioReal(t.getFechaInicioReal()).fechaFinReal(t.getFechaFinReal())
                 .estado(t.getEstado() != null ? t.getEstado().name() : null).activo(t.getActivo()).build();
+    }
+
+    private EtapaProyecto obtenerEtapaValida(Long etapaProyectoId, Proyecto proyecto) {
+        if (etapaProyectoId == null) {
+            return null;
+        }
+        EtapaProyecto etapa = etapaRepo.buscarPorId(etapaProyectoId)
+                .filter(EtapaProyecto::getActivo)
+                .orElseThrow(() -> new RuntimeException("Etapa de proyecto no encontrada"));
+        if (!etapa.getProyecto().getId().equals(proyecto.getId())) {
+            throw new RuntimeException("La etapa no pertenece al proyecto indicado");
+        }
+        return etapa;
+    }
+
+    private void validarHorasEtapa(EtapaProyecto etapa, BigDecimal horasTarea, Long tareaActualId) {
+        if (etapa == null || horasTarea == null || etapa.getHorasPlanificadas() == null) {
+            return;
+        }
+
+        BigDecimal totalOtrasTareas = tareaRepo.buscarActivasPorEtapa(etapa.getId()).stream()
+                .filter(t -> tareaActualId == null || !t.getId().equals(tareaActualId))
+                .map(t -> t.getHorasPlanificadas() != null ? t.getHorasPlanificadas() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalOtrasTareas.add(horasTarea).compareTo(etapa.getHorasPlanificadas()) > 0) {
+            throw new RuntimeException("La suma de horas de las tareas no puede superar las horas planificadas de la etapa");
+        }
     }
 }

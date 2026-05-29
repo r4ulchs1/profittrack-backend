@@ -32,9 +32,19 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
         Proyecto proy = proyectoRepo.buscarPorId(dto.getProyectoId())
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+        TareaProyecto tarea = null;
+        if (dto.getTareaId() != null) {
+            tarea = tareaRepo.buscarPorId(dto.getTareaId())
+                    .filter(TareaProyecto::getActivo)
+                    .orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+            if (!tarea.getProyecto().getId().equals(proy.getId())) {
+                throw new RuntimeException("La tarea no pertenece al proyecto indicado");
+            }
+        }
 
         RegistroHoras rh = rhRepo.guardar(RegistroHoras.builder()
                 .empleado(emp).proyecto(proy)
+                .tarea(tarea)
                 .fechaTrabajo(dto.getFechaTrabajo())
                 .horaIngreso(dto.getHoraIngreso())
                 .horaSalida(dto.getHoraSalida())

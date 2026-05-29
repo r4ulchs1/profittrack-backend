@@ -73,6 +73,8 @@ updated_at timestamp
 Table roles {
 id bigint [pk, increment]
 
+empresa_id bigint [ref: > empresas.id]
+
 nombre varchar(100) [not null]
 descripcion text
 
@@ -192,6 +194,40 @@ updated_at timestamp
 }
 
 // ======================================================
+// ETAPAS DEL PROYECTO
+// ======================================================
+
+Table etapas_proyecto {
+id bigint [pk, increment]
+
+proyecto_id bigint [not null, ref: > proyectos.id]
+
+nombre varchar(160) [not null]
+descripcion text
+
+orden int [not null]
+
+horas_planificadas decimal(10,2)
+horas_reales decimal(10,2)
+
+fecha_inicio_planificada date
+fecha_fin_planificada date
+
+fecha_inicio_real date
+fecha_fin_real date
+
+estado varchar(50)
+// PENDIENTE
+// EN_CURSO
+// FINALIZADA
+
+activo boolean [default: true]
+
+created_at timestamp
+updated_at timestamp
+}
+
+// ======================================================
 // EMPLEADOS ASIGNADOS AL PROYECTO
 // ======================================================
 
@@ -267,6 +303,7 @@ Table tareas_proyecto {
 id bigint [pk, increment]
 
 proyecto_id bigint [not null, ref: > proyectos.id]
+etapa_proyecto_id bigint [ref: > etapas_proyecto.id]
 tipo_tarea_id bigint [ref: > tipos_tarea.id]
 
 empleado_asignado_id bigint [ref: > empleados.id]
