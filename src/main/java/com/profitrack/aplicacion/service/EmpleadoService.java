@@ -38,8 +38,7 @@ public class EmpleadoService implements EmpleadoUseCase {
 
         Rol rol = null;
         if (dto.getRolId() != null) {
-            rol = rolJpaRepository.findById(dto.getRolId())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + dto.getRolId()));
+            rol = obtenerRolDeEmpresa(dto.getRolId(), empresa);
         }
 
         Empleado empleado = Empleado.builder()
@@ -120,9 +119,7 @@ public class EmpleadoService implements EmpleadoUseCase {
         }
 
         if (dto.getRolId() != null) {
-            Rol rol = rolJpaRepository.findById(dto.getRolId())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + dto.getRolId()));
-            empleado.setRol(rol);
+            empleado.setRol(obtenerRolDeEmpresa(dto.getRolId(), empleado.getEmpresa()));
         }
 
         return toDto(empleadoRepository.guardar(empleado));
@@ -154,5 +151,17 @@ public class EmpleadoService implements EmpleadoUseCase {
                 .fechaSalida(e.getFechaSalida())
                 .activo(e.getActivo())
                 .build();
+    }
+
+    private Rol obtenerRolDeEmpresa(Long rolId, Empresa empresa) {
+        Rol rol = rolJpaRepository.findById(rolId)
+                .filter(Rol::getActivo)
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + rolId));
+
+        if (rol.getEmpresa() == null || !rol.getEmpresa().getId().equals(empresa.getId())) {
+            throw new RuntimeException("Rol no encontrado con id: " + rolId);
+        }
+
+        return rol;
     }
 }
