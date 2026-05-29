@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 @Data
 public class TareaProyectoPatchDto {
+    private Long etapaProyectoId;
     private Long tipoTareaId;
     private Long empleadoAsignadoId;
     private String nombre;

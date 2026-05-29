@@ -7,6 +7,8 @@ import java.time.LocalDate;
 public class TareaProyectoResponseDto {
     private Long id;
     private Long proyectoId;
+    private Long etapaProyectoId;
+    private String etapaProyectoNombre;
     private Long tipoTareaId;
     private String tipoTareaNombre;
     private Long empleadoAsignadoId;

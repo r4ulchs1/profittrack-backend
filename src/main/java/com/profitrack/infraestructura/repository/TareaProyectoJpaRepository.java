@@ -8,4 +8,6 @@ public interface TareaProyectoJpaRepository extends JpaRepository<TareaProyecto,
     List<TareaProyecto> findAllByProyectoIdAndActivoTrue(Long proyectoId);
 
     List<TareaProyecto> findAllByProyectoIdAndActivoFalse(Long proyectoId);
+
+    List<TareaProyecto> findAllByEtapaProyectoIdAndActivoTrue(Long etapaProyectoId);
 }

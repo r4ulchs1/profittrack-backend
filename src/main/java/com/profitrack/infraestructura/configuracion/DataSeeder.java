@@ -41,13 +41,13 @@ public class DataSeeder implements CommandLineRunner {
                                 .build());
 
                 // ── 2. Roles ──
-                Rol rolGerente = rolRepo.save(Rol.builder().nombre("Gerente")
+                Rol rolGerente = rolRepo.save(Rol.builder().empresa(empresa).nombre("Gerente")
                                 .descripcion("Gerente general — visualiza rentabilidad y reportes").build());
-                Rol rolPM = rolRepo.save(Rol.builder().nombre("PM")
+                Rol rolPM = rolRepo.save(Rol.builder().empresa(empresa).nombre("PM")
                                 .descripcion("Project Manager — gestiona proyectos").build());
-                Rol rolAdmin = rolRepo.save(Rol.builder().nombre("Administrador")
+                Rol rolAdmin = rolRepo.save(Rol.builder().empresa(empresa).nombre("Administrador")
                                 .descripcion("Administrador operativo — registra empleados").build());
-                Rol rolDev = rolRepo.save(Rol.builder().nombre("Desarrollador")
+                Rol rolDev = rolRepo.save(Rol.builder().empresa(empresa).nombre("Desarrollador")
                                 .descripcion("Desarrollador — reporta horas trabajadas").build());
 
                 // ── 3. Owner (Dueño) ──

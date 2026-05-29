@@ -32,4 +32,9 @@ public class TareaProyectoRepositoryAdapter implements TareaProyectoRepository {
     public List<TareaProyecto> buscarInactivasPorProyecto(Long proyectoId) {
         return jpa.findAllByProyectoIdAndActivoFalse(proyectoId);
     }
+
+    @Override
+    public List<TareaProyecto> buscarActivasPorEtapa(Long etapaProyectoId) {
+        return jpa.findAllByEtapaProyectoIdAndActivoTrue(etapaProyectoId);
+    }
 }

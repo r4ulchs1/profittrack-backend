@@ -6,6 +6,7 @@ import java.time.LocalDate;
 @Data
 public class TareaProyectoRequestDto {
     @NotNull private Long proyectoId;
+    private Long etapaProyectoId;
     private Long tipoTareaId;
     private Long empleadoAsignadoId;
     private String nombre;

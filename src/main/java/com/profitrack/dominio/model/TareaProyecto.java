@@ -35,6 +35,10 @@ public class TareaProyecto extends BaseEntity {
     private TipoTarea tipoTarea;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "etapa_proyecto_id")
+    private EtapaProyecto etapaProyecto;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empleado_asignado_id")
     private Empleado empleadoAsignado;
 
