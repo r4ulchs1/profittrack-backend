@@ -284,7 +284,6 @@ public class ProyectoService implements ProyectoUseCase {
         List<TareaProyecto> tareas = etapa.getId() != null
                 ? tareaProyectoRepository.buscarActivasPorEtapa(etapa.getId())
                 : List.of();
-
         BigDecimal horasTareasPlanificadas = tareas.stream()
                 .map(t -> safeValue(t.getHorasPlanificadas()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

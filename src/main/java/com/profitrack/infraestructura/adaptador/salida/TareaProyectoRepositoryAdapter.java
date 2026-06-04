@@ -37,4 +37,9 @@ public class TareaProyectoRepositoryAdapter implements TareaProyectoRepository {
     public List<TareaProyecto> buscarActivasPorEtapa(Long etapaProyectoId) {
         return jpa.findAllByEtapaProyectoIdAndActivoTrue(etapaProyectoId);
     }
+
+    @Override
+    public List<TareaProyecto> buscarActivasPorEtapas(List<Long> etapaProyectoIds) {
+        return jpa.findAllByEtapaProyectoIdInAndActivoTrue(etapaProyectoIds);
+    }
 }
