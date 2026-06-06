@@ -5,6 +5,7 @@ import com.profitrack.aplicacion.dto.registroHorasDto.RegistroHorasResumenDto;
 import java.util.List;
 public interface RegistroHorasUseCase {
     RegistroHorasResponseDto registrar(Long empleadoId, RegistroHorasRequestDto dto);
+    RegistroHorasResponseDto obtenerPorId(Long id);
     List<RegistroHorasResponseDto> listarPorProyecto(Long proyectoId);
     List<RegistroHorasResponseDto> listarPorEmpleado(Long empleadoId);
     RegistroHorasResponseDto aprobar(Long id);

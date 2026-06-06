@@ -5,6 +5,7 @@ import com.profitrack.aplicacion.dto.tareaProyectoDto.TareaProyectoPatchDto;
 import java.util.List;
 public interface TareaProyectoUseCase {
     TareaProyectoResponseDto crear(TareaProyectoRequestDto dto);
+    TareaProyectoResponseDto obtenerPorId(Long id);
     List<TareaProyectoResponseDto> listarPorProyecto(Long proyectoId);
     List<TareaProyectoResponseDto> listarInactivasPorProyecto(Long proyectoId);
     TareaProyectoResponseDto actualizar(Long id, TareaProyectoPatchDto dto);

@@ -5,6 +5,7 @@ import com.profitrack.aplicacion.dto.etapaProyectoDto.EtapaProyectoRequestDto;
 import com.profitrack.aplicacion.dto.etapaProyectoDto.EtapaProyectoResponseDto;
 import com.profitrack.aplicacion.puerto.entrada.EtapaProyectoUseCase;
 import com.profitrack.dominio.model.EstadoEtapa;
+import com.profitrack.dominio.model.EstadoProyecto;
 import com.profitrack.dominio.model.EstadoTarea;
 import com.profitrack.dominio.model.EtapaProyecto;
 import com.profitrack.dominio.model.Proyecto;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,16 +68,20 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<EtapaProyectoResponseDto> listarPorProyecto(Long proyectoId) {
-        return etapaRepo.buscarActivasPorProyecto(proyectoId).stream()
-                .map(this::toDto)
+        List<EtapaProyecto> etapas = etapaRepo.buscarActivasPorProyecto(proyectoId);
+        Map<Long, List<TareaProyecto>> tareasPorEtapa = buscarTareasPorEtapa(etapas);
+        return etapas.stream()
+                .map(etapa -> toDto(etapa, tareasPorEtapa.getOrDefault(etapa.getId(), List.of())))
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EtapaProyectoResponseDto> listarInactivasPorProyecto(Long proyectoId) {
-        return etapaRepo.buscarInactivasPorProyecto(proyectoId).stream()
-                .map(this::toDto)
+        List<EtapaProyecto> etapas = etapaRepo.buscarInactivasPorProyecto(proyectoId);
+        Map<Long, List<TareaProyecto>> tareasPorEtapa = buscarTareasPorEtapa(etapas);
+        return etapas.stream()
+                .map(etapa -> toDto(etapa, tareasPorEtapa.getOrDefault(etapa.getId(), List.of())))
                 .collect(Collectors.toList());
     }
 
@@ -118,6 +124,7 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
         }
         if (dto.getEstado() != null) {
             EstadoEtapa nuevoEstado = EstadoEtapa.valueOf(dto.getEstado());
+            validarCambioEstado(etapa, nuevoEstado);
             if (EstadoEtapa.FINALIZADA.equals(nuevoEstado)) {
                 validarTareasFinalizadas(etapa.getId());
             }
@@ -165,7 +172,15 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (totalTareas.compareTo(horasEtapa) > 0) {
-            throw new RuntimeException("Las horas de la etapa no pueden ser menores que las horas planificadas de sus tareas");
+            throw new IllegalArgumentException("Las horas de la etapa no pueden ser menores que las horas planificadas de sus tareas");
+        }
+    }
+
+    private void validarCambioEstado(EtapaProyecto etapa, EstadoEtapa nuevoEstado) {
+        if (EstadoEtapa.EN_CURSO.equals(nuevoEstado)
+                && !EstadoProyecto.EN_PROCESO.equals(etapa.getProyecto().getEstado())) {
+            throw new IllegalArgumentException("No se puede iniciar la etapa porque el proyecto esta "
+                    + nombreEstado(etapa.getProyecto().getEstado()) + "; el proyecto debe estar EN_PROCESO");
         }
     }
 
@@ -174,7 +189,7 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
                 .anyMatch(t -> !EstadoTarea.FINALIZADO.equals(t.getEstado()));
 
         if (tieneTareasPendientes) {
-            throw new RuntimeException("No se puede finalizar la etapa porque tiene tareas pendientes o en curso");
+            throw new IllegalArgumentException("No se puede finalizar la etapa porque tiene tareas pendientes o en curso");
         }
     }
 
@@ -182,7 +197,10 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
         List<TareaProyecto> tareas = etapa.getId() != null
                 ? tareaRepo.buscarActivasPorEtapa(etapa.getId())
                 : List.of();
+        return toDto(etapa, tareas);
+    }
 
+    private EtapaProyectoResponseDto toDto(EtapaProyecto etapa, List<TareaProyecto> tareas) {
         BigDecimal horasTareasPlanificadas = tareas.stream()
                 .map(t -> safeValue(t.getHorasPlanificadas()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -211,6 +229,14 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
                 .build();
     }
 
+    private Map<Long, List<TareaProyecto>> buscarTareasPorEtapa(List<EtapaProyecto> etapas) {
+        List<Long> etapaIds = etapas.stream()
+                .map(EtapaProyecto::getId)
+                .toList();
+        return tareaRepo.buscarActivasPorEtapas(etapaIds).stream()
+                .collect(Collectors.groupingBy(t -> t.getEtapaProyecto().getId()));
+    }
+
     private void actualizarHorasPlanificadasProyecto(Proyecto proyecto) {
         BigDecimal totalEtapas = etapaRepo.buscarActivasPorProyecto(proyecto.getId()).stream()
                 .map(e -> safeValue(e.getHorasPlanificadas()))
@@ -221,5 +247,9 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
 
     private BigDecimal safeValue(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private String nombreEstado(Enum<?> estado) {
+        return estado != null ? estado.name() : "SIN_ESTADO";
     }
 }

@@ -8,4 +8,5 @@ public interface TareaProyectoRepository {
     List<TareaProyecto> buscarActivasPorProyecto(Long proyectoId);
     List<TareaProyecto> buscarInactivasPorProyecto(Long proyectoId);
     List<TareaProyecto> buscarActivasPorEtapa(Long etapaProyectoId);
+    List<TareaProyecto> buscarActivasPorEtapas(List<Long> etapaProyectoIds);
 }

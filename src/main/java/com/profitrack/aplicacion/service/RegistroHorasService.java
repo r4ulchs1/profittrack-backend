@@ -32,15 +32,16 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
         Proyecto proy = proyectoRepo.buscarPorId(dto.getProyectoId())
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
-        TareaProyecto tarea = null;
-        if (dto.getTareaId() != null) {
-            tarea = tareaRepo.buscarPorId(dto.getTareaId())
-                    .filter(TareaProyecto::getActivo)
-                    .orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
-            if (!tarea.getProyecto().getId().equals(proy.getId())) {
-                throw new RuntimeException("La tarea no pertenece al proyecto indicado");
-            }
+        if (dto.getTareaId() == null) {
+            throw new IllegalArgumentException("Debe seleccionar una tarea en curso para registrar horas");
         }
+        TareaProyecto tarea = tareaRepo.buscarPorId(dto.getTareaId())
+                .filter(TareaProyecto::getActivo)
+                .orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+        if (!tarea.getProyecto().getId().equals(proy.getId())) {
+            throw new IllegalArgumentException("La tarea no pertenece al proyecto indicado");
+        }
+        validarTareaPermiteRegistrarHoras(tarea);
 
         RegistroHoras rh = rhRepo.guardar(RegistroHoras.builder()
                 .empleado(emp).proyecto(proy)
@@ -61,6 +62,13 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public List<RegistroHorasResponseDto> listarPorProyecto(Long proyectoId) {
         return rhRepo.buscarActivosPorProyecto(proyectoId).stream().map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public RegistroHorasResponseDto obtenerPorId(Long id) {
+        return rhRepo.buscarPorId(id)
+                .map(this::toDto)
+                .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
     }
 
     @Override
@@ -281,5 +289,27 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .aprobado(rh.getAprobado())
                 .activo(rh.getActivo())
                 .build();
+    }
+
+    private void validarTareaPermiteRegistrarHoras(TareaProyecto tarea) {
+        if (!EstadoTarea.EN_CURSO.equals(tarea.getEstado())) {
+            throw new IllegalArgumentException("No se pueden registrar horas porque la tarea esta "
+                    + nombreEstado(tarea.getEstado()) + "; la tarea debe estar EN_CURSO");
+        }
+        if (tarea.getEtapaProyecto() == null) {
+            throw new IllegalArgumentException("No se pueden registrar horas porque la tarea no tiene una etapa asignada");
+        }
+        if (!EstadoEtapa.EN_CURSO.equals(tarea.getEtapaProyecto().getEstado())) {
+            throw new IllegalArgumentException("No se pueden registrar horas porque la etapa esta "
+                    + nombreEstado(tarea.getEtapaProyecto().getEstado()) + "; la etapa debe estar EN_CURSO");
+        }
+        if (!EstadoProyecto.EN_PROCESO.equals(tarea.getProyecto().getEstado())) {
+            throw new IllegalArgumentException("No se pueden registrar horas porque el proyecto esta "
+                    + nombreEstado(tarea.getProyecto().getEstado()) + "; el proyecto debe estar EN_PROCESO");
+        }
+    }
+
+    private String nombreEstado(Enum<?> estado) {
+        return estado != null ? estado.name() : "SIN_ESTADO";
     }
 }

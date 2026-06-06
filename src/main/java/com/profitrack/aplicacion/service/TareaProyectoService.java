@@ -25,6 +25,7 @@ public class TareaProyectoService implements TareaProyectoUseCase {
         Proyecto p = proyectoRepo.buscarPorId(dto.getProyectoId())
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
         EtapaProyecto etapa = obtenerEtapaValida(dto.getEtapaProyectoId(), p);
+        validarEtapaPermiteCrearTarea(etapa);
         validarHorasEtapa(etapa, dto.getHorasPlanificadas(), null);
         TipoTarea tt = dto.getTipoTareaId() != null ? tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null)
                 : null;
@@ -47,6 +48,13 @@ public class TareaProyectoService implements TareaProyectoUseCase {
     }
 
     @Override
+    public TareaProyectoResponseDto obtenerPorId(Long id) {
+        return tareaRepo.buscarPorId(id)
+                .map(this::toDto)
+                .orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+    }
+
+    @Override
     public List<TareaProyectoResponseDto> listarInactivasPorProyecto(Long proyectoId) {
         return tareaRepo.buscarInactivasPorProyecto(proyectoId).stream().map(this::toDto).collect(Collectors.toList());
     }
@@ -65,12 +73,19 @@ public class TareaProyectoService implements TareaProyectoUseCase {
         EtapaProyecto etapa = t.getEtapaProyecto();
         if (dto.getEtapaProyectoId() != null) {
             etapa = obtenerEtapaValida(dto.getEtapaProyectoId(), t.getProyecto());
+            validarEtapaPermiteCrearTarea(etapa);
         }
 
         BigDecimal horasPlanificadas = dto.getHorasPlanificadas() != null
                 ? dto.getHorasPlanificadas()
                 : t.getHorasPlanificadas();
         validarHorasEtapa(etapa, horasPlanificadas, t.getId());
+
+        EstadoTarea nuevoEstado = null;
+        if (dto.getEstado() != null) {
+            nuevoEstado = EstadoTarea.valueOf(dto.getEstado());
+            validarCambioEstadoTarea(etapa, nuevoEstado);
+        }
 
         if (dto.getNombre() != null)
             t.setNombre(dto.getNombre());
@@ -86,8 +101,8 @@ public class TareaProyectoService implements TareaProyectoUseCase {
             t.setFechaInicioReal(dto.getFechaInicioReal());
         if (dto.getFechaFinReal() != null)
             t.setFechaFinReal(dto.getFechaFinReal());
-        if (dto.getEstado() != null)
-            t.setEstado(EstadoTarea.valueOf(dto.getEstado()));
+        if (nuevoEstado != null)
+            t.setEstado(nuevoEstado);
         if (dto.getTipoTareaId() != null)
             t.setTipoTarea(tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null));
         if (dto.getEtapaProyectoId() != null)
@@ -123,15 +138,38 @@ public class TareaProyectoService implements TareaProyectoUseCase {
 
     private EtapaProyecto obtenerEtapaValida(Long etapaProyectoId, Proyecto proyecto) {
         if (etapaProyectoId == null) {
-            return null;
+            throw new IllegalArgumentException("La etapa del proyecto es obligatoria");
         }
         EtapaProyecto etapa = etapaRepo.buscarPorId(etapaProyectoId)
                 .filter(EtapaProyecto::getActivo)
                 .orElseThrow(() -> new RuntimeException("Etapa de proyecto no encontrada"));
         if (!etapa.getProyecto().getId().equals(proyecto.getId())) {
-            throw new RuntimeException("La etapa no pertenece al proyecto indicado");
+            throw new IllegalArgumentException("La etapa no pertenece al proyecto indicado");
         }
         return etapa;
+    }
+
+    private void validarEtapaPermiteCrearTarea(EtapaProyecto etapa) {
+        if (EstadoEtapa.FINALIZADA.equals(etapa.getEstado())) {
+            throw new IllegalArgumentException("No se puede crear la tarea porque la etapa esta FINALIZADA");
+        }
+    }
+
+    private void validarCambioEstadoTarea(EtapaProyecto etapa, EstadoTarea nuevoEstado) {
+        if (!EstadoTarea.EN_CURSO.equals(nuevoEstado)) {
+            return;
+        }
+        if (etapa == null) {
+            throw new IllegalArgumentException("No se puede iniciar la tarea porque no tiene una etapa asignada");
+        }
+        if (!EstadoEtapa.EN_CURSO.equals(etapa.getEstado())) {
+            throw new IllegalArgumentException("No se puede iniciar la tarea porque la etapa esta "
+                    + nombreEstado(etapa.getEstado()) + "; la etapa debe estar EN_CURSO");
+        }
+        if (!EstadoProyecto.EN_PROCESO.equals(etapa.getProyecto().getEstado())) {
+            throw new IllegalArgumentException("No se puede iniciar la tarea porque el proyecto esta "
+                    + nombreEstado(etapa.getProyecto().getEstado()) + "; el proyecto debe estar EN_PROCESO");
+        }
     }
 
     private void validarHorasEtapa(EtapaProyecto etapa, BigDecimal horasTarea, Long tareaActualId) {
@@ -145,7 +183,11 @@ public class TareaProyectoService implements TareaProyectoUseCase {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (totalOtrasTareas.add(horasTarea).compareTo(etapa.getHorasPlanificadas()) > 0) {
-            throw new RuntimeException("La suma de horas de las tareas no puede superar las horas planificadas de la etapa");
+            throw new IllegalArgumentException("La suma de horas de las tareas no puede superar las horas planificadas de la etapa");
         }
+    }
+
+    private String nombreEstado(Enum<?> estado) {
+        return estado != null ? estado.name() : "SIN_ESTADO";
     }
 }

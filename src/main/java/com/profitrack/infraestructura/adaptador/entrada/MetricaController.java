@@ -22,17 +22,19 @@ public class MetricaController {
 
     @PostMapping("/proyecto/{proyectoId}/snapshot")
     public ResponseEntity<MetricaSnapshotResponseDto> generarSnapshot(@PathVariable Long proyectoId) {
-        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        ctx.validarRolOProyectoLider(proyectoId, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.status(HttpStatus.CREATED).body(metricaUseCase.generarSnapshot(proyectoId));
     }
 
     @GetMapping("/proyecto/{proyectoId}")
     public ResponseEntity<List<MetricaSnapshotResponseDto>> porProyecto(@PathVariable Long proyectoId) {
+        ctx.validarRolOProyectoLider(proyectoId, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(metricaUseCase.listarPorProyecto(proyectoId));
     }
 
     @GetMapping("/proyecto/{proyectoId}/actual")
     public ResponseEntity<RentabilidadResponseDto> rentabilidadActual(@PathVariable Long proyectoId) {
+        ctx.validarRolOProyectoLider(proyectoId, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(metricaUseCase.calcularRentabilidadActual(proyectoId));
     }
 }

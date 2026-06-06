@@ -21,6 +21,7 @@ public class RegistroHorasController {
 
     @PostMapping
     public ResponseEntity<RegistroHorasResponseDto> registrar(@Valid @RequestBody RegistroHorasRequestDto dto) {
+        ctx.validarAccesoProyecto(dto.getProyectoId());
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.registrar(ctx.getUserId(), dto));
     }
 
@@ -31,6 +32,11 @@ public class RegistroHorasController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaInicio,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaFin) {
         Long empresaId = ctx.getEmpresaId();
+        if (proyectoId != null) {
+            ctx.validarRolOProyectoLider(proyectoId, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        } else {
+            ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER, RolConstantes.ADMINISTRADOR);
+        }
         return ResponseEntity.ok(useCase.obtenerResumen(empresaId, proyectoId, empleadoId, fechaInicio, fechaFin));
     }
 
@@ -41,23 +47,30 @@ public class RegistroHorasController {
 
     @GetMapping("/proyecto/{proyectoId}")
     public ResponseEntity<List<RegistroHorasResponseDto>> porProyecto(@PathVariable Long proyectoId) {
+        ctx.validarRolOProyectoLider(proyectoId, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.listarPorProyecto(proyectoId));
     }
 
     @PatchMapping("/{id}/aprobar")
     public ResponseEntity<RegistroHorasResponseDto> aprobar(@PathVariable Long id) {
-        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        RegistroHorasResponseDto actual = useCase.obtenerPorId(id);
+        ctx.validarRolOProyectoLider(actual.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.aprobar(id));
     }
 
     @PatchMapping("/{id}/rechazar")
     public ResponseEntity<RegistroHorasResponseDto> rechazar(@PathVariable Long id) {
-        ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        RegistroHorasResponseDto actual = useCase.obtenerPorId(id);
+        ctx.validarRolOProyectoLider(actual.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.rechazar(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        RegistroHorasResponseDto actual = useCase.obtenerPorId(id);
+        if (!"empleado".equalsIgnoreCase(ctx.getTipo()) || !actual.getEmpleadoId().equals(ctx.getUserId())) {
+            ctx.validarRolOProyectoLider(actual.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        }
         useCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }
