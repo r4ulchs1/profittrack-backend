@@ -8,18 +8,23 @@ import java.util.Optional;
 
 public interface TareaProyectoJpaRepository extends JpaRepository<TareaProyecto, Long> {
     @Override
-    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto", "tipoTarea", "empleadoAsignado"})
+    @EntityGraph(attributePaths = { "proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto",
+            "tipoTarea", "empleadoAsignado" })
     Optional<TareaProyecto> findById(Long id);
 
-    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto", "tipoTarea", "empleadoAsignado"})
+    @EntityGraph(attributePaths = { "proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto",
+            "tipoTarea", "empleadoAsignado" })
     List<TareaProyecto> findAllByProyectoIdAndActivoTrue(Long proyectoId);
 
-    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto", "tipoTarea", "empleadoAsignado"})
+    @EntityGraph(attributePaths = { "proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto",
+            "tipoTarea", "empleadoAsignado" })
     List<TareaProyecto> findAllByProyectoIdAndActivoFalse(Long proyectoId);
 
-    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto", "tipoTarea", "empleadoAsignado"})
+    @EntityGraph(attributePaths = { "proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto",
+            "tipoTarea", "empleadoAsignado" })
     List<TareaProyecto> findAllByEtapaProyectoIdAndActivoTrue(Long etapaProyectoId);
 
-    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto", "tipoTarea", "empleadoAsignado"})
+    @EntityGraph(attributePaths = { "proyecto", "proyecto.empresa", "etapaProyecto", "etapaProyecto.proyecto",
+            "tipoTarea", "empleadoAsignado" })
     List<TareaProyecto> findAllByEtapaProyectoIdInAndActivoTrue(List<Long> etapaProyectoIds);
 }
