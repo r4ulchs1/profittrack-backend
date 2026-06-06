@@ -1,7 +1,9 @@
 package com.profitrack.infraestructura.seguridad;
 
+import com.profitrack.dominio.model.Administrador;
 import com.profitrack.dominio.model.Duenio;
 import com.profitrack.dominio.model.Empleado;
+import com.profitrack.dominio.puerto.salida.AdministradorRepository;
 import com.profitrack.dominio.puerto.salida.DuenioRepository;
 import com.profitrack.dominio.puerto.salida.EmpleadoRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final EmpleadoRepository empleadoRepository;
     private final DuenioRepository duenioRepository;
+    private final AdministradorRepository administradorRepository;
 
     @Override
     public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
@@ -42,6 +45,17 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .username(d.getCorreo())
                     .password(d.getContrasenia())
                     .roles("Owner")
+                    .build();
+        }
+
+        // 3. Buscar en administradores
+        Optional<Administrador> adminOpt = administradorRepository.buscarPorCorreoYActivo(correo);
+        if (adminOpt.isPresent()) {
+            Administrador a = adminOpt.get();
+            return User.builder()
+                    .username(a.getCorreo())
+                    .password(a.getContrasenia())
+                    .roles("Administrador")
                     .build();
         }
 

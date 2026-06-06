@@ -38,6 +38,7 @@ public class RolController {
 
     @GetMapping
     public ResponseEntity<List<RolResponseDto>> listarActivos() {
+        validarGestionRoles();
         return ResponseEntity.ok(rolUseCase.listarActivos(securityContext.getEmpresaId()));
     }
 
@@ -49,6 +50,7 @@ public class RolController {
 
     @GetMapping("/{id}")
     public ResponseEntity<RolResponseDto> obtenerPorId(@PathVariable Long id) {
+        validarGestionRoles();
         return ResponseEntity.ok(rolUseCase.obtenerPorId(id, securityContext.getEmpresaId()));
     }
 

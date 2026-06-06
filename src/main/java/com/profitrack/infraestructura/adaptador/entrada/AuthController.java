@@ -1,7 +1,9 @@
 package com.profitrack.infraestructura.adaptador.entrada;
 
+import com.profitrack.dominio.model.Administrador;
 import com.profitrack.dominio.model.Duenio;
 import com.profitrack.dominio.model.Empleado;
+import com.profitrack.dominio.puerto.salida.AdministradorRepository;
 import com.profitrack.dominio.puerto.salida.DuenioRepository;
 import com.profitrack.dominio.puerto.salida.EmpleadoRepository;
 import com.profitrack.infraestructura.seguridad.TokenService;
@@ -36,6 +38,7 @@ public class AuthController {
     private final AuthenticationManager authManager;
     private final EmpleadoRepository empleadoRepo;
     private final DuenioRepository duenioRepo;
+    private final AdministradorRepository administradorRepo;
     private final TokenService tokenService;
 
     // dto privado
@@ -79,6 +82,19 @@ public class AuthController {
                     "empresaId", duenio.getEmpresa().getId()));
         }
 
+        Optional<Administrador> adminOpt = administradorRepo.buscarPorCorreoYActivo(req.correo());
+        if (adminOpt.isPresent()) {
+            Administrador admin = adminOpt.get();
+            tokenService.crearSesionAdministrador(admin, httpReq.getHeader("User-Agent"), httpRes);
+            return ResponseEntity.ok(Map.of(
+                    "mensaje", "Login exitoso",
+                    "tipo", "administrador",
+                    "userId", admin.getId(),
+                    "nombre", admin.getNombres() + " " + admin.getApellidos(),
+                    "rol", "Administrador",
+                    "empresaId", 0L));
+        }
+
         return ResponseEntity.status(401).body(Map.of("error", "Usuario no encontrado"));
     }
 
@@ -100,14 +116,22 @@ public class AuthController {
                     Duenio duenio = duenioRepo.buscarPorId(userId)
                             .orElseThrow(() -> new RuntimeException("Dueño no encontrado"));
                     return tokenService.buildJwtDuenio(duenio, sessionId);
+                } else if ("administrador".equalsIgnoreCase(userType)) {
+                    Administrador admin = administradorRepo.buscarPorId(userId)
+                            .orElseThrow(() -> new RuntimeException("Administrador no encontrado"));
+                    return tokenService.buildJwtAdministrador(admin, sessionId);
                 } else {
                     Optional<Empleado> empOpt = empleadoRepo.buscarPorId(userId);
                     if (empOpt.isPresent()) {
                         return tokenService.buildJwtEmpleado(empOpt.get(), sessionId);
                     }
-                    Duenio duenio = duenioRepo.buscarPorId(userId)
-                            .orElseThrow(() -> new RuntimeException("Dueño no encontrado"));
-                    return tokenService.buildJwtDuenio(duenio, sessionId);
+                    Optional<Duenio> dOpt = duenioRepo.buscarPorId(userId);
+                    if (dOpt.isPresent()) {
+                        return tokenService.buildJwtDuenio(dOpt.get(), sessionId);
+                    }
+                    Administrador admin = administradorRepo.buscarPorId(userId)
+                            .orElseThrow(() -> new RuntimeException("Administrador no encontrado"));
+                    return tokenService.buildJwtAdministrador(admin, sessionId);
                 }
             });
 

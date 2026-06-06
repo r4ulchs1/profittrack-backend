@@ -1,5 +1,6 @@
 package com.profitrack.infraestructura.seguridad;
 
+import com.profitrack.dominio.model.Administrador;
 import com.profitrack.dominio.model.Duenio;
 import com.profitrack.dominio.model.Empleado;
 import com.profitrack.dominio.model.SesionUsuario;
@@ -83,6 +84,28 @@ public class TokenService {
     }
 
     @Transactional
+    public String crearSesionAdministrador(Administrador admin, String deviceInfo, HttpServletResponse res) {
+        String sessionId = UUID.randomUUID().toString();
+        String rawRefresh = UUID.randomUUID().toString();
+
+        sesionRepo.guardar(SesionUsuario.builder()
+                .userId(admin.getId())
+                .userType("administrador")
+                .sessionId(sessionId)
+                .refreshTokenHash(hash(rawRefresh))
+                .deviceInfo(deviceInfo)
+                .revoked(false)
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(refreshExp))
+                .build());
+
+        String accessToken = buildJwtAdministrador(admin, sessionId);
+        setAccessCookie(res, accessToken);
+        setRefreshCookie(res, rawRefresh);
+        return accessToken;
+    }
+
+    @Transactional
     public String rotarSesion(String rawRefresh, HttpServletResponse res,
             TokenBuilder tokenBuilder) {
         SesionUsuario sesion = sesionRepo.buscarPorRefreshTokenHash(hash(rawRefresh))
@@ -148,6 +171,23 @@ public class TokenService {
                 .claim("empresaId", duenio.getEmpresa().getId())
                 .claim("rolNombre", "Owner")
                 .claim("tipo", "duenio")
+                .claim("sessionId", sessionId)
+                .build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+    }
+
+    public String buildJwtAdministrador(Administrador admin, String sessionId) {
+        Instant now = Instant.now();
+        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("profittrack")
+                .subject(admin.getCorreo())
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(accessExp))
+                .claim("userId", admin.getId())
+                .claim("empresaId", 0L) // Los admins generales puede que no tengan empresaId, ajustamos
+                .claim("rolNombre", "Administrador")
+                .claim("tipo", "administrador")
                 .claim("sessionId", sessionId)
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

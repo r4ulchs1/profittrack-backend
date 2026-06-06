@@ -2,6 +2,8 @@ package com.profitrack.infraestructura.adaptador.entrada;
 
 import com.profitrack.dominio.model.CostoRegistroHoras;
 import com.profitrack.dominio.puerto.salida.CostoRegistroHorasRepository;
+import com.profitrack.infraestructura.seguridad.RolConstantes;
+import com.profitrack.infraestructura.seguridad.SecurityContextUtils;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +22,18 @@ import java.util.stream.Collectors;
 public class CostoRegistroHorasController {
 
     private final CostoRegistroHorasRepository costoRepo;
+    private final SecurityContextUtils ctx;
 
     @GetMapping("/proyecto/{proyectoId}")
     public ResponseEntity<List<CostoRegistroDto>> porProyecto(@PathVariable Long proyectoId) {
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.PM, RolConstantes.OWNER, RolConstantes.ADMINISTRADOR);
         return ResponseEntity.ok(costoRepo.buscarPorProyecto(proyectoId).stream()
                 .map(this::toDto).collect(Collectors.toList()));
     }
 
     @GetMapping("/proyecto/{proyectoId}/resumen")
     public ResponseEntity<List<ResumenCostoEmpleadoDto>> resumenPorProyecto(@PathVariable Long proyectoId) {
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.PM, RolConstantes.OWNER, RolConstantes.ADMINISTRADOR);
         Map<Long, List<CostoRegistroHoras>> agrupado = costoRepo.buscarPorProyecto(proyectoId).stream()
                 .collect(Collectors.groupingBy(c -> c.getRegistroHoras().getEmpleado().getId()));
 

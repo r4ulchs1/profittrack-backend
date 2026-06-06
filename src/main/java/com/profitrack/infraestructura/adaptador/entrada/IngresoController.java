@@ -28,11 +28,13 @@ public class IngresoController {
 
     @GetMapping
     public ResponseEntity<List<IngresoResponseDto>> listar() {
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.PM, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.listarPorEmpresa(ctx.getEmpresaId()));
     }
 
     @GetMapping("/proyecto/{proyectoId}")
     public ResponseEntity<List<IngresoResponseDto>> listarPorProyecto(@PathVariable Long proyectoId) {
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.PM, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.listarPorProyecto(proyectoId));
     }
 
