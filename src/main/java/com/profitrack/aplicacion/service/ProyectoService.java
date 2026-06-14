@@ -45,6 +45,7 @@ public class ProyectoService implements ProyectoUseCase {
     private static final List<String> PERMISOS_MIEMBRO = List.of(
             "VER_PROYECTO",
             "VER_TAREAS",
+            "CREAR_TAREA_REALIZADA",
             "REGISTRAR_HORAS");
 
     private final ProyectoRepository proyectoRepository;
@@ -377,8 +378,6 @@ public class ProyectoService implements ProyectoUseCase {
                     .orden(etapaDto.getOrden() != null ? etapaDto.getOrden() : orden)
                     .horasPlanificadas(etapaDto.getHorasPlanificadas())
                     .horasReales(BigDecimal.ZERO)
-                    .fechaInicioPlanificada(etapaDto.getFechaInicioPlanificada())
-                    .fechaFinPlanificada(etapaDto.getFechaFinPlanificada())
                     .estado(EstadoEtapa.PENDIENTE)
                     .build());
             orden++;
@@ -424,10 +423,6 @@ public class ProyectoService implements ProyectoUseCase {
                 .horasPlanificadas(etapa.getHorasPlanificadas())
                 .horasTareasPlanificadas(horasTareasPlanificadas)
                 .horasReales(horasReales)
-                .fechaInicioPlanificada(etapa.getFechaInicioPlanificada())
-                .fechaFinPlanificada(etapa.getFechaFinPlanificada())
-                .fechaInicioReal(etapa.getFechaInicioReal())
-                .fechaFinReal(etapa.getFechaFinReal())
                 .estado(etapa.getEstado() != null ? etapa.getEstado().name() : null)
                 .activo(etapa.getActivo())
                 .build();

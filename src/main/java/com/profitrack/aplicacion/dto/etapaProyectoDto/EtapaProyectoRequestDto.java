@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Data
 public class EtapaProyectoRequestDto {
@@ -19,7 +18,4 @@ public class EtapaProyectoRequestDto {
 
     @DecimalMin(value = "0.00")
     private BigDecimal horasPlanificadas;
-
-    private LocalDate fechaInicioPlanificada;
-    private LocalDate fechaFinPlanificada;
 }

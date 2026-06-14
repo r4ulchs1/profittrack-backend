@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Data
 @Builder
@@ -19,10 +18,6 @@ public class EtapaProyectoResponseDto {
     private BigDecimal horasPlanificadas;
     private BigDecimal horasTareasPlanificadas;
     private BigDecimal horasReales;
-    private LocalDate fechaInicioPlanificada;
-    private LocalDate fechaFinPlanificada;
-    private LocalDate fechaInicioReal;
-    private LocalDate fechaFinReal;
     private String estado;
     private Boolean activo;
 }

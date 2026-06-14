@@ -11,5 +11,5 @@ public interface RegistroHorasUseCase {
     RegistroHorasResponseDto aprobar(Long id);
     RegistroHorasResponseDto rechazar(Long id);
     void eliminar(Long id);
-    RegistroHorasResumenDto obtenerResumen(Long empresaId, Long proyectoId, Long empleadoId, java.time.LocalDate fechaInicio, java.time.LocalDate fechaFin);
+    RegistroHorasResumenDto obtenerResumen(Long empresaId, Long proyectoId, Long empleadoId);
 }

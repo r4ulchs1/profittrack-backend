@@ -6,6 +6,7 @@ import com.profitrack.aplicacion.puerto.entrada.TareaProyectoUseCase;
 import com.profitrack.dominio.puerto.salida.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,8 +20,12 @@ public class TareaProyectoService implements TareaProyectoUseCase {
     private final TipoTareaRepository tipoTareaRepo;
     private final EmpleadoRepository empleadoRepo;
     private final EtapaProyectoRepository etapaRepo;
+    private final RegistroHorasRepository registroHorasRepo;
+    private final ProyectoEmpleadoRepository proyectoEmpleadoRepo;
+    private final CostoRegistroHorasRepository costoRegistroHorasRepo;
 
     @Override
+    @Transactional
     public TareaProyectoResponseDto crear(TareaProyectoRequestDto dto) {
         Proyecto p = proyectoRepo.buscarPorId(dto.getProyectoId())
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
@@ -36,18 +41,65 @@ public class TareaProyectoService implements TareaProyectoUseCase {
                 .proyecto(p).etapaProyecto(etapa).tipoTarea(tt).empleadoAsignado(emp)
                 .nombre(dto.getNombre()).descripcion(dto.getDescripcion())
                 .horasPlanificadas(dto.getHorasPlanificadas())
-                .fechaInicioPlanificada(dto.getFechaInicioPlanificada())
-                .fechaFinPlanificada(dto.getFechaFinPlanificada())
                 .estado(EstadoTarea.PENDIENTE).build());
         return toDto(t);
     }
 
     @Override
+    @Transactional
+    public TareaRealizadaResponseDto registrarRealizada(Long empleadoId, TareaRealizadaRequestDto dto) {
+        Proyecto proyecto = proyectoRepo.buscarPorId(dto.getProyectoId())
+                .filter(Proyecto::getActivo)
+                .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+
+        Empleado empleado = empleadoRepo.buscarPorId(empleadoId)
+                .filter(Empleado::getActivo)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        validarEmpleadoPuedeRegistrarEnProyecto(proyecto, empleado.getId());
+
+        EtapaProyecto etapa = obtenerEtapaOpcional(dto.getEtapaProyectoId(), proyecto);
+        if (etapa != null) {
+            validarEtapaPermiteCrearTarea(etapa);
+        }
+
+        TipoTarea tipoTarea = dto.getTipoTareaId() != null
+                ? tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null)
+                : null;
+
+        TareaProyecto tarea = tareaRepo.guardar(TareaProyecto.builder()
+                .proyecto(proyecto)
+                .etapaProyecto(etapa)
+                .tipoTarea(tipoTarea)
+                .empleadoAsignado(empleado)
+                .nombre(dto.getNombre())
+                .descripcion(dto.getDescripcion())
+                .horasPlanificadas(dto.getHorasDedicadas())
+                .horasReales(BigDecimal.ZERO)
+                .estado(EstadoTarea.FINALIZADO)
+                .build());
+
+        RegistroHoras registro = registroHorasRepo.guardar(RegistroHoras.builder()
+                .empleado(empleado)
+                .proyecto(proyecto)
+                .tarea(tarea)
+                .horasTrabajadas(dto.getHorasDedicadas())
+                .descripcion(dto.getDescripcion())
+                .aprobado(false)
+                .estadoAprobacion(EstadoAprobacion.PENDIENTE)
+                .build());
+
+        return toRealizadaDto(tarea, registro);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<TareaProyectoResponseDto> listarPorProyecto(Long proyectoId) {
         return tareaRepo.buscarActivasPorProyecto(proyectoId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TareaProyectoResponseDto obtenerPorId(Long id) {
         return tareaRepo.buscarPorId(id)
                 .map(this::toDto)
@@ -55,11 +107,13 @@ public class TareaProyectoService implements TareaProyectoUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TareaProyectoResponseDto> listarInactivasPorProyecto(Long proyectoId) {
         return tareaRepo.buscarInactivasPorProyecto(proyectoId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public TareaProyectoResponseDto reactivar(Long id) {
         TareaProyecto t = tareaRepo.buscarPorId(id).orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
         t.setActivo(true);
@@ -67,8 +121,25 @@ public class TareaProyectoService implements TareaProyectoUseCase {
     }
 
     @Override
+    @Transactional
     public TareaProyectoResponseDto actualizar(Long id, TareaProyectoPatchDto dto) {
+        return actualizarInterno(id, dto, null, false);
+    }
+
+    @Override
+    @Transactional
+    public TareaProyectoResponseDto actualizarPropia(Long id, Long empleadoId, TareaProyectoPatchDto dto) {
+        return actualizarInterno(id, dto, empleadoId, true);
+    }
+
+    private TareaProyectoResponseDto actualizarInterno(Long id, TareaProyectoPatchDto dto, Long empleadoId,
+            boolean validarPropietario) {
         TareaProyecto t = tareaRepo.buscarPorId(id).orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+
+        if (validarPropietario) {
+            validarPropietario(t, empleadoId);
+            validarEditablePorCreador(t);
+        }
 
         EtapaProyecto etapa = t.getEtapaProyecto();
         if (dto.getEtapaProyectoId() != null) {
@@ -79,7 +150,9 @@ public class TareaProyectoService implements TareaProyectoUseCase {
         BigDecimal horasPlanificadas = dto.getHorasPlanificadas() != null
                 ? dto.getHorasPlanificadas()
                 : t.getHorasPlanificadas();
-        validarHorasEtapa(etapa, horasPlanificadas, t.getId());
+        if (!validarPropietario) {
+            validarHorasEtapa(etapa, horasPlanificadas, t.getId());
+        }
 
         EstadoTarea nuevoEstado = null;
         if (dto.getEstado() != null) {
@@ -93,28 +166,33 @@ public class TareaProyectoService implements TareaProyectoUseCase {
             t.setDescripcion(dto.getDescripcion());
         if (dto.getHorasPlanificadas() != null)
             t.setHorasPlanificadas(dto.getHorasPlanificadas());
-        if (dto.getFechaInicioPlanificada() != null)
-            t.setFechaInicioPlanificada(dto.getFechaInicioPlanificada());
-        if (dto.getFechaFinPlanificada() != null)
-            t.setFechaFinPlanificada(dto.getFechaFinPlanificada());
-        if (dto.getFechaInicioReal() != null)
-            t.setFechaInicioReal(dto.getFechaInicioReal());
-        if (dto.getFechaFinReal() != null)
-            t.setFechaFinReal(dto.getFechaFinReal());
         if (nuevoEstado != null)
             t.setEstado(nuevoEstado);
         if (dto.getTipoTareaId() != null)
             t.setTipoTarea(tipoTareaRepo.buscarPorId(dto.getTipoTareaId()).orElse(null));
         if (dto.getEtapaProyectoId() != null)
             t.setEtapaProyecto(etapa);
+        if (dto.getEmpleadoAsignadoId() != null && validarPropietario
+                && !dto.getEmpleadoAsignadoId().equals(empleadoId)) {
+            throw new IllegalArgumentException("No se puede cambiar el creador de la tarea");
+        }
         if (dto.getEmpleadoAsignadoId() != null)
             t.setEmpleadoAsignado(empleadoRepo.buscarPorId(dto.getEmpleadoAsignadoId()).orElse(null));
-        return toDto(tareaRepo.guardar(t));
+
+        TareaProyecto guardada = tareaRepo.guardar(t);
+        if (validarPropietario) {
+            sincronizarRegistrosPendientes(guardada);
+        }
+        return toDto(guardada);
     }
 
     @Override
+    @Transactional
     public void eliminar(Long id) {
         TareaProyecto t = tareaRepo.buscarPorId(id).orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+        if (tieneRegistrosAprobados(t)) {
+            throw new IllegalArgumentException("No se puede eliminar una tarea con horas aprobadas");
+        }
         t.setActivo(false);
         tareaRepo.guardar(t);
     }
@@ -131,9 +209,107 @@ public class TareaProyectoService implements TareaProyectoUseCase {
                         : null)
                 .nombre(t.getNombre()).descripcion(t.getDescripcion())
                 .horasPlanificadas(t.getHorasPlanificadas()).horasReales(t.getHorasReales())
-                .fechaInicioPlanificada(t.getFechaInicioPlanificada()).fechaFinPlanificada(t.getFechaFinPlanificada())
-                .fechaInicioReal(t.getFechaInicioReal()).fechaFinReal(t.getFechaFinReal())
-                .estado(t.getEstado() != null ? t.getEstado().name() : null).activo(t.getActivo()).build();
+                .estado(t.getEstado() != null ? t.getEstado().name() : null)
+                .creadoEn(t.getCreadoEn())
+                .actualizadoEn(t.getActualizadoEn())
+                .activo(t.getActivo()).build();
+    }
+
+    private TareaRealizadaResponseDto toRealizadaDto(TareaProyecto tarea, RegistroHoras registro) {
+        return TareaRealizadaResponseDto.builder()
+                .tareaId(tarea.getId())
+                .registroHorasId(registro.getId())
+                .proyectoId(tarea.getProyecto().getId())
+                .proyectoNombre(tarea.getProyecto().getNombre())
+                .etapaProyectoId(tarea.getEtapaProyecto() != null ? tarea.getEtapaProyecto().getId() : null)
+                .etapaProyectoNombre(tarea.getEtapaProyecto() != null ? tarea.getEtapaProyecto().getNombre() : null)
+                .tipoTareaId(tarea.getTipoTarea() != null ? tarea.getTipoTarea().getId() : null)
+                .tipoTareaNombre(tarea.getTipoTarea() != null ? tarea.getTipoTarea().getNombre() : null)
+                .empleadoId(tarea.getEmpleadoAsignado() != null ? tarea.getEmpleadoAsignado().getId() : null)
+                .empleadoNombre(tarea.getEmpleadoAsignado() != null
+                        ? tarea.getEmpleadoAsignado().getNombres() + " "
+                                + tarea.getEmpleadoAsignado().getApellidos()
+                        : null)
+                .nombre(tarea.getNombre())
+                .descripcion(tarea.getDescripcion())
+                .horasDedicadas(registro.getHorasTrabajadas())
+                .estadoTarea(tarea.getEstado() != null ? tarea.getEstado().name() : null)
+                .estadoAprobacion(estadoAprobacion(registro).name())
+                .creadoEn(tarea.getCreadoEn())
+                .actualizadoEn(tarea.getActualizadoEn())
+                .build();
+    }
+
+    private void validarEmpleadoPuedeRegistrarEnProyecto(Proyecto proyecto, Long empleadoId) {
+        boolean esLider = proyecto.getLiderEmpleado() != null
+                && proyecto.getLiderEmpleado().getId().equals(empleadoId);
+        boolean tieneAsignacion = proyectoEmpleadoRepo
+                .buscarActivoPorProyectoYEmpleado(proyecto.getId(), empleadoId)
+                .isPresent();
+        if (!esLider && !tieneAsignacion) {
+            throw new IllegalArgumentException("El empleado no pertenece al proyecto");
+        }
+    }
+
+    private EtapaProyecto obtenerEtapaOpcional(Long etapaProyectoId, Proyecto proyecto) {
+        if (etapaProyectoId == null) {
+            return null;
+        }
+        return obtenerEtapaValida(etapaProyectoId, proyecto);
+    }
+
+    private void validarPropietario(TareaProyecto tarea, Long empleadoId) {
+        if (tarea.getEmpleadoAsignado() == null || !tarea.getEmpleadoAsignado().getId().equals(empleadoId)) {
+            throw new IllegalArgumentException("Solo el usuario que creo la tarea puede editarla");
+        }
+    }
+
+    private void validarEditablePorCreador(TareaProyecto tarea) {
+        if (tieneRegistrosAprobados(tarea)) {
+            throw new IllegalArgumentException("No se puede editar una tarea con horas aprobadas");
+        }
+    }
+
+    private boolean tieneRegistrosAprobados(TareaProyecto tarea) {
+        if (tarea.getId() == null) {
+            return false;
+        }
+        return registroHorasRepo.buscarActivosPorTarea(tarea.getId()).stream()
+                .anyMatch(this::estaAprobado);
+    }
+
+    private void sincronizarRegistrosPendientes(TareaProyecto tarea) {
+        if (tarea.getId() == null) {
+            return;
+        }
+        List<RegistroHoras> registros = registroHorasRepo.buscarActivosPorTarea(tarea.getId());
+        for (RegistroHoras registro : registros) {
+            if (estaAprobado(registro)) {
+                continue;
+            }
+            registro.setHorasTrabajadas(tarea.getHorasPlanificadas());
+            registro.setDescripcion(tarea.getDescripcion());
+            registro.setAprobado(false);
+            registro.setEstadoAprobacion(EstadoAprobacion.PENDIENTE);
+            registro.setAprobadoEn(null);
+            registro.setRechazadoEn(null);
+            registroHorasRepo.guardar(registro);
+            costoRegistroHorasRepo.eliminarPorRegistroHoras(registro.getId());
+        }
+    }
+
+    private boolean estaAprobado(RegistroHoras registro) {
+        return EstadoAprobacion.APROBADO.equals(estadoAprobacion(registro))
+                || Boolean.TRUE.equals(registro.getAprobado());
+    }
+
+    private EstadoAprobacion estadoAprobacion(RegistroHoras registro) {
+        if (registro.getEstadoAprobacion() != null) {
+            return registro.getEstadoAprobacion();
+        }
+        return Boolean.TRUE.equals(registro.getAprobado())
+                ? EstadoAprobacion.APROBADO
+                : EstadoAprobacion.PENDIENTE;
     }
 
     private EtapaProyecto obtenerEtapaValida(Long etapaProyectoId, Proyecto proyecto) {

@@ -47,8 +47,6 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
                 .orden(orden)
                 .horasPlanificadas(dto.getHorasPlanificadas())
                 .horasReales(BigDecimal.ZERO)
-                .fechaInicioPlanificada(dto.getFechaInicioPlanificada())
-                .fechaFinPlanificada(dto.getFechaFinPlanificada())
                 .estado(EstadoEtapa.PENDIENTE)
                 .build();
 
@@ -109,18 +107,6 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
         }
         if (dto.getHorasPlanificadas() != null) {
             etapa.setHorasPlanificadas(dto.getHorasPlanificadas());
-        }
-        if (dto.getFechaInicioPlanificada() != null) {
-            etapa.setFechaInicioPlanificada(dto.getFechaInicioPlanificada());
-        }
-        if (dto.getFechaFinPlanificada() != null) {
-            etapa.setFechaFinPlanificada(dto.getFechaFinPlanificada());
-        }
-        if (dto.getFechaInicioReal() != null) {
-            etapa.setFechaInicioReal(dto.getFechaInicioReal());
-        }
-        if (dto.getFechaFinReal() != null) {
-            etapa.setFechaFinReal(dto.getFechaFinReal());
         }
         if (dto.getEstado() != null) {
             EstadoEtapa nuevoEstado = EstadoEtapa.valueOf(dto.getEstado());
@@ -220,10 +206,6 @@ public class EtapaProyectoService implements EtapaProyectoUseCase {
                 .horasPlanificadas(etapa.getHorasPlanificadas())
                 .horasTareasPlanificadas(horasTareasPlanificadas)
                 .horasReales(horasReales)
-                .fechaInicioPlanificada(etapa.getFechaInicioPlanificada())
-                .fechaFinPlanificada(etapa.getFechaFinPlanificada())
-                .fechaInicioReal(etapa.getFechaInicioReal())
-                .fechaFinReal(etapa.getFechaFinReal())
                 .estado(etapa.getEstado() != null ? etapa.getEstado().name() : null)
                 .activo(etapa.getActivo())
                 .build();

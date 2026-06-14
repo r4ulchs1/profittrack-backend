@@ -2,8 +2,7 @@ package com.profitrack.aplicacion.dto.registroHorasDto;
 import lombok.Builder;
 import lombok.Data;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 @Data @Builder
 public class RegistroHorasResponseDto {
     private Long id;
@@ -13,12 +12,13 @@ public class RegistroHorasResponseDto {
     private String proyectoNombre;
     private Long tareaId;
     private String tareaNombre;
-    private LocalDate fechaTrabajo;
-    private LocalDateTime horaIngreso;
-    private LocalDateTime horaSalida;
-    private Integer minutosDescanso;
     private BigDecimal horasTrabajadas;
     private String descripcion;
     private Boolean aprobado;
+    private String estadoAprobacion;
+    private Instant creadoEn;
+    private Instant actualizadoEn;
+    private Instant aprobadoEn;
+    private Instant rechazadoEn;
     private Boolean activo;
 }

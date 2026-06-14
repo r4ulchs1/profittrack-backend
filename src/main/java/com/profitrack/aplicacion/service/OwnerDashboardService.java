@@ -51,7 +51,7 @@ public class OwnerDashboardService implements OwnerDashboardUseCase {
         ProyectoResponseDto proyecto = proyectoUseCase.obtenerPorIdParaUsuario(proyectoId, empleadoId, rolGlobal);
         RentabilidadResponseDto rentabilidad = metricaUseCase.calcularRentabilidadActual(proyectoId);
         RegistroHorasResumenDto resumenHoras = registroHorasUseCase.obtenerResumen(
-                empresaId, proyectoId, null, null, null);
+                empresaId, proyectoId, null);
         List<OwnerDashboardResponseDto.CostoEmpleadoDto> costosPorEmpleado = calcularCostosPorEmpleado(proyectoId);
         List<ProyectoEmpleadoResponseDto> equipo = proyectoEmpleadoUseCase.listarPorProyecto(proyectoId);
         List<ProyectoCostoEmpleadoResponseDto> costosAplicados = proyectoCostoEmpleadoUseCase.listarPorProyecto(proyectoId);
