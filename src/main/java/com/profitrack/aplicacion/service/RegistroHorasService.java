@@ -46,13 +46,10 @@ public class RegistroHorasService implements RegistroHorasUseCase {
         RegistroHoras rh = rhRepo.guardar(RegistroHoras.builder()
                 .empleado(emp).proyecto(proy)
                 .tarea(tarea)
-                .fechaTrabajo(dto.getFechaTrabajo())
-                .horaIngreso(dto.getHoraIngreso())
-                .horaSalida(dto.getHoraSalida())
-                .minutosDescanso(dto.getMinutosDescanso() != null ? dto.getMinutosDescanso() : 0)
                 .horasTrabajadas(dto.getHorasTrabajadas())
                 .descripcion(dto.getDescripcion())
                 .aprobado(false)
+                .estadoAprobacion(EstadoAprobacion.PENDIENTE)
                 .build());
 
         return toDto(rh);
@@ -82,10 +79,18 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public RegistroHorasResponseDto aprobar(Long id) {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
-        if (Boolean.TRUE.equals(rh.getAprobado())) {
+        if (estaAprobado(rh)) {
             return toDto(rh);
         }
+        if (EstadoAprobacion.DESAPROBADO.equals(estadoAprobacion(rh))) {
+            throw new IllegalArgumentException("No se puede aprobar un registro desaprobado; el empleado debe corregirlo primero");
+        }
+
+        Instant ahora = Instant.now();
         rh.setAprobado(true);
+        rh.setEstadoAprobacion(EstadoAprobacion.APROBADO);
+        rh.setAprobadoEn(ahora);
+        rh.setRechazadoEn(null);
         rhRepo.guardar(rh);
 
         // limpiamos cualquier costo viejo q haya quedado colgado por si acaso
@@ -94,16 +99,16 @@ public class RegistroHorasService implements RegistroHorasUseCase {
         BigDecimal costoHora = costoEmpRepo.buscarActivoPorProyectoYEmpleado(
                 rh.getProyecto().getId(), rh.getEmpleado().getId())
                 .map(ProyectoCostoEmpleado::getCostoHora)
-                .orElse(BigDecimal.ZERO);
+                .orElseThrow(() -> new IllegalArgumentException("El empleado no tiene costo hora aplicado en el proyecto"));
 
-        BigDecimal costoTotal;
         BigDecimal horasTrabajadas = rh.getHorasTrabajadas() != null ? rh.getHorasTrabajadas()
                 : BigDecimal.ZERO;
+        BigDecimal costoTotal = costoHora.multiply(horasTrabajadas);
 
         if (rh.getTarea() != null) {
             List<RegistroHoras> approvedForTask = rhRepo.buscarActivosPorTarea(rh.getTarea().getId())
                     .stream()
-                    .filter(r -> Boolean.TRUE.equals(r.getAprobado())
+                    .filter(r -> estaAprobado(r)
                             && !r.getId().equals(rh.getId()))
                     .toList();
 
@@ -112,29 +117,16 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                             : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            BigDecimal horasPlanificadas = rh.getTarea().getHorasPlanificadas() != null
-                    ? rh.getTarea().getHorasPlanificadas()
-                    : BigDecimal.ZERO;
-
-            BigDecimal remainingHours = horasPlanificadas.subtract(previouslyApprovedHours);
-            if (remainingHours.compareTo(BigDecimal.ZERO) < 0) {
-                remainingHours = BigDecimal.ZERO;
-            }
-            BigDecimal horasParaCosto = horasTrabajadas.min(remainingHours);
-            costoTotal = costoHora.multiply(horasParaCosto);
-
             BigDecimal newHorasReales = previouslyApprovedHours.add(horasTrabajadas);
             rh.getTarea().setHorasReales(newHorasReales);
             tareaRepo.guardar(rh.getTarea());
-        } else {
-            costoTotal = costoHora.multiply(horasTrabajadas);
         }
 
         costoRhRepo.guardar(CostoRegistroHoras.builder()
                 .registroHoras(rh)
                 .costoHora(costoHora)
                 .costoTotal(costoTotal)
-                .fechaCalculo(Instant.now())
+                .fechaCalculo(ahora)
                 .build());
 
         return toDto(rh);
@@ -145,18 +137,19 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public RegistroHorasResponseDto rechazar(Long id) {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
-        if (!Boolean.TRUE.equals(rh.getAprobado())) {
-            return toDto(rh);
-        }
+        boolean wasAprobado = estaAprobado(rh);
         rh.setAprobado(false);
+        rh.setEstadoAprobacion(EstadoAprobacion.DESAPROBADO);
+        rh.setAprobadoEn(null);
+        rh.setRechazadoEn(Instant.now());
 
         // si el pm rechaza, eliminamos el costo calculado para q no sume al proyecto
         costoRhRepo.eliminarPorRegistroHoras(id);
 
-        if (rh.getTarea() != null) {
+        if (wasAprobado && rh.getTarea() != null) {
             List<RegistroHoras> approvedForTask = rhRepo.buscarActivosPorTarea(rh.getTarea().getId())
                     .stream()
-                    .filter(r -> Boolean.TRUE.equals(r.getAprobado())
+                    .filter(r -> estaAprobado(r)
                             && !r.getId().equals(rh.getId()))
                     .toList();
             BigDecimal newHorasReales = approvedForTask.stream()
@@ -175,7 +168,7 @@ public class RegistroHorasService implements RegistroHorasUseCase {
     public void eliminar(Long id) {
         RegistroHoras rh = rhRepo.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
-        boolean wasAprobado = Boolean.TRUE.equals(rh.getAprobado());
+        boolean wasAprobado = estaAprobado(rh);
         rh.setActivo(false);
         rhRepo.guardar(rh);
 
@@ -184,7 +177,7 @@ public class RegistroHorasService implements RegistroHorasUseCase {
             if (rh.getTarea() != null) {
                 List<RegistroHoras> approvedForTask = rhRepo
                         .buscarActivosPorTarea(rh.getTarea().getId()).stream()
-                        .filter(r -> Boolean.TRUE.equals(r.getAprobado())
+                        .filter(r -> estaAprobado(r)
                                 && !r.getId().equals(rh.getId()))
                         .toList();
                 BigDecimal newHorasReales = approvedForTask.stream()
@@ -199,16 +192,13 @@ public class RegistroHorasService implements RegistroHorasUseCase {
 
     @Override
     public com.profitrack.aplicacion.dto.registroHorasDto.RegistroHorasResumenDto obtenerResumen(
-            Long empresaId, Long proyectoId, Long empleadoId,
-            java.time.LocalDate fechaInicio, java.time.LocalDate fechaFin) {
+            Long empresaId, Long proyectoId, Long empleadoId) {
 
         List<RegistroHoras> todos = rhRepo.buscarActivosPorEmpresa(empresaId);
 
         List<RegistroHoras> filtrados = todos.stream()
                 .filter(rh -> proyectoId == null || rh.getProyecto().getId().equals(proyectoId))
                 .filter(rh -> empleadoId == null || rh.getEmpleado().getId().equals(empleadoId))
-                .filter(rh -> fechaInicio == null || !rh.getFechaTrabajo().isBefore(fechaInicio))
-                .filter(rh -> fechaFin == null || !rh.getFechaTrabajo().isAfter(fechaFin))
                 .collect(Collectors.toList());
 
         BigDecimal totalRegistradas = filtrados.stream()
@@ -216,11 +206,19 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalAprobadas = filtrados.stream()
-                .filter(RegistroHoras::getAprobado)
+                .filter(this::estaAprobado)
                 .map(rh -> rh.getHorasTrabajadas() != null ? rh.getHorasTrabajadas() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalPendientes = totalRegistradas.subtract(totalAprobadas);
+        BigDecimal totalPendientes = filtrados.stream()
+                .filter(rh -> EstadoAprobacion.PENDIENTE.equals(estadoAprobacion(rh)))
+                .map(rh -> rh.getHorasTrabajadas() != null ? rh.getHorasTrabajadas() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalRechazadas = filtrados.stream()
+                .filter(rh -> EstadoAprobacion.DESAPROBADO.equals(estadoAprobacion(rh)))
+                .map(rh -> rh.getHorasTrabajadas() != null ? rh.getHorasTrabajadas() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         java.util.Map<Proyecto, BigDecimal> porProyecto = filtrados.stream()
                 .collect(Collectors.groupingBy(
@@ -265,7 +263,7 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .totalHorasRegistradas(totalRegistradas)
                 .totalHorasAprobadas(totalAprobadas)
                 .totalHorasPendientes(totalPendientes)
-                .totalHorasRechazadas(BigDecimal.ZERO)
+                .totalHorasRechazadas(totalRechazadas)
                 .horasPorProyecto(proyectoDtos)
                 .horasPorEmpleado(empleadoDtos)
                 .build();
@@ -280,15 +278,30 @@ public class RegistroHorasService implements RegistroHorasUseCase {
                 .proyectoNombre(rh.getProyecto().getNombre())
                 .tareaId(rh.getTarea() != null ? rh.getTarea().getId() : null)
                 .tareaNombre(rh.getTarea() != null ? rh.getTarea().getNombre() : null)
-                .fechaTrabajo(rh.getFechaTrabajo())
-                .horaIngreso(rh.getHoraIngreso())
-                .horaSalida(rh.getHoraSalida())
-                .minutosDescanso(rh.getMinutosDescanso())
                 .horasTrabajadas(rh.getHorasTrabajadas())
                 .descripcion(rh.getDescripcion())
-                .aprobado(rh.getAprobado())
+                .aprobado(estaAprobado(rh))
+                .estadoAprobacion(estadoAprobacion(rh).name())
+                .creadoEn(rh.getCreadoEn())
+                .actualizadoEn(rh.getActualizadoEn())
+                .aprobadoEn(rh.getAprobadoEn())
+                .rechazadoEn(rh.getRechazadoEn())
                 .activo(rh.getActivo())
                 .build();
+    }
+
+    private boolean estaAprobado(RegistroHoras registro) {
+        return EstadoAprobacion.APROBADO.equals(estadoAprobacion(registro))
+                || Boolean.TRUE.equals(registro.getAprobado());
+    }
+
+    private EstadoAprobacion estadoAprobacion(RegistroHoras registro) {
+        if (registro.getEstadoAprobacion() != null) {
+            return registro.getEstadoAprobacion();
+        }
+        return Boolean.TRUE.equals(registro.getAprobado())
+                ? EstadoAprobacion.APROBADO
+                : EstadoAprobacion.PENDIENTE;
     }
 
     private void validarTareaPermiteRegistrarHoras(TareaProyecto tarea) {

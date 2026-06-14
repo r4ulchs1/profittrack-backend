@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "tareas_proyecto")
@@ -53,18 +52,6 @@ public class TareaProyecto extends BaseEntity {
 
     @Column(name = "horas_reales", precision = 10, scale = 2)
     private BigDecimal horasReales;
-
-    @Column(name = "fecha_inicio_planificada")
-    private LocalDate fechaInicioPlanificada;
-
-    @Column(name = "fecha_fin_planificada")
-    private LocalDate fechaFinPlanificada;
-
-    @Column(name = "fecha_inicio_real")
-    private LocalDate fechaInicioReal;
-
-    @Column(name = "fecha_fin_real")
-    private LocalDate fechaFinReal;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)

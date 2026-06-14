@@ -18,6 +18,15 @@ public class TareaProyectoController {
     private final TareaProyectoUseCase useCase;
     private final SecurityContextUtils ctx;
 
+    @PostMapping("/realizadas")
+    public ResponseEntity<TareaRealizadaResponseDto> registrarRealizada(
+            @Valid @RequestBody TareaRealizadaRequestDto dto) {
+        validarUsuarioEmpleado();
+        ctx.validarAccesoProyecto(dto.getProyectoId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(useCase.registrarRealizada(ctx.getUserId(), dto));
+    }
+
     @PostMapping
     public ResponseEntity<TareaProyectoResponseDto> crear(@Valid @RequestBody TareaProyectoRequestDto dto) {
         ctx.validarRolOProyectoLider(dto.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
@@ -47,15 +56,29 @@ public class TareaProyectoController {
     public ResponseEntity<TareaProyectoResponseDto> actualizar(@PathVariable Long id,
             @RequestBody @Valid TareaProyectoPatchDto dto) {
         TareaProyectoResponseDto actual = useCase.obtenerPorId(id);
-        ctx.validarRolOProyectoLider(actual.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
-        return ResponseEntity.ok(useCase.actualizar(id, dto));
+        ctx.validarAccesoProyecto(actual.getProyectoId());
+        validarUsuarioEmpleado();
+        if (actual.getEmpleadoAsignadoId() == null || !actual.getEmpleadoAsignadoId().equals(ctx.getUserId())) {
+            throw new RuntimeException("Solo el usuario que creo la tarea puede editarla");
+        }
+        return ResponseEntity.ok(useCase.actualizarPropia(id, ctx.getUserId(), dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         TareaProyectoResponseDto actual = useCase.obtenerPorId(id);
-        ctx.validarRolOProyectoLider(actual.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
+        ctx.validarAccesoProyecto(actual.getProyectoId());
+        validarUsuarioEmpleado();
+        if (actual.getEmpleadoAsignadoId() == null || !actual.getEmpleadoAsignadoId().equals(ctx.getUserId())) {
+            throw new RuntimeException("Solo el usuario que creo la tarea puede eliminarla");
+        }
         useCase.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private void validarUsuarioEmpleado() {
+        if (!"empleado".equalsIgnoreCase(ctx.getTipo())) {
+            throw new RuntimeException("Esta operacion debe realizarla un empleado autenticado");
+        }
     }
 }

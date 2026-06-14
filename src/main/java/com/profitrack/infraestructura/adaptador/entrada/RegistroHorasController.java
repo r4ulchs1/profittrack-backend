@@ -28,16 +28,14 @@ public class RegistroHorasController {
     @GetMapping("/resumen")
     public ResponseEntity<com.profitrack.aplicacion.dto.registroHorasDto.RegistroHorasResumenDto> resumen(
             @RequestParam(required = false) Long proyectoId,
-            @RequestParam(required = false) Long empleadoId,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaInicio,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaFin) {
+            @RequestParam(required = false) Long empleadoId) {
         Long empresaId = ctx.getEmpresaId();
         if (proyectoId != null) {
             ctx.validarRolOProyectoLider(proyectoId, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         } else {
             ctx.validarRol(RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER, RolConstantes.ADMINISTRADOR);
         }
-        return ResponseEntity.ok(useCase.obtenerResumen(empresaId, proyectoId, empleadoId, fechaInicio, fechaFin));
+        return ResponseEntity.ok(useCase.obtenerResumen(empresaId, proyectoId, empleadoId));
     }
 
     @GetMapping("/mis-horas")
@@ -63,6 +61,11 @@ public class RegistroHorasController {
         RegistroHorasResponseDto actual = useCase.obtenerPorId(id);
         ctx.validarRolOProyectoLider(actual.getProyectoId(), RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.rechazar(id));
+    }
+
+    @PatchMapping("/{id}/desaprobar")
+    public ResponseEntity<RegistroHorasResponseDto> desaprobar(@PathVariable Long id) {
+        return rechazar(id);
     }
 
     @DeleteMapping("/{id}")

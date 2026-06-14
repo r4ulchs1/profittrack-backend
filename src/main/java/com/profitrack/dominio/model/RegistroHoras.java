@@ -2,6 +2,8 @@ package com.profitrack.dominio.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -13,8 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "registro_horas")
@@ -37,19 +38,6 @@ public class RegistroHoras extends BaseEntity {
     @JoinColumn(name = "tarea_id")
     private TareaProyecto tarea;
 
-    @Column(name = "fecha_trabajo")
-    private LocalDate fechaTrabajo;
-
-    @Column(name = "hora_ingreso")
-    private LocalDateTime horaIngreso;
-
-    @Column(name = "hora_salida")
-    private LocalDateTime horaSalida;
-
-    @Builder.Default
-    @Column(name = "minutos_descanso")
-    private Integer minutosDescanso = 0;
-
     @Column(name = "horas_trabajadas", precision = 10, scale = 2)
     private BigDecimal horasTrabajadas;
 
@@ -58,4 +46,15 @@ public class RegistroHoras extends BaseEntity {
 
     @Builder.Default
     private Boolean aprobado = false;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_aprobacion", length = 30)
+    private EstadoAprobacion estadoAprobacion = EstadoAprobacion.PENDIENTE;
+
+    @Column(name = "aprobado_en", columnDefinition = "timestamp with time zone")
+    private Instant aprobadoEn;
+
+    @Column(name = "rechazado_en", columnDefinition = "timestamp with time zone")
+    private Instant rechazadoEn;
 }

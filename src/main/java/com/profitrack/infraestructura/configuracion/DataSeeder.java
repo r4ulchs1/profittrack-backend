@@ -7,6 +7,7 @@ import com.profitrack.dominio.model.Duenio;
 import com.profitrack.dominio.model.Egreso;
 import com.profitrack.dominio.model.Empleado;
 import com.profitrack.dominio.model.Empresa;
+import com.profitrack.dominio.model.EstadoAprobacion;
 import com.profitrack.dominio.model.EstadoEtapa;
 import com.profitrack.dominio.model.EstadoProyecto;
 import com.profitrack.dominio.model.EstadoTarea;
@@ -49,7 +50,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -303,87 +303,79 @@ public class DataSeeder implements CommandLineRunner {
                 asignarEmpleado(proyecto, qa, "QA Analyst", bd("38.00"), inicio.plusDays(20));
 
                 EtapaProyecto analisis = guardarEtapa(proyecto, "Descubrimiento y analisis", 1,
-                                EstadoEtapa.FINALIZADA, bd("40.00"), bd("38.00"),
-                                inicio.minusDays(3), inicio.plusDays(8), inicio, inicio.plusDays(8));
+                                EstadoEtapa.FINALIZADA, bd("40.00"), bd("38.00"));
                 EtapaProyecto desarrollo = guardarEtapa(proyecto, "Desarrollo MVP", 2,
-                                EstadoEtapa.EN_CURSO, bd("140.00"), bd("107.50"),
-                                inicio.plusDays(9), hoy.plusDays(20), inicio.plusDays(9), null);
+                                EstadoEtapa.EN_CURSO, bd("140.00"), bd("107.50"));
                 EtapaProyecto qaEtapa = guardarEtapa(proyecto, "QA y despliegue", 3,
-                                EstadoEtapa.PENDIENTE, bd("60.00"), bd("0.00"),
-                                hoy.plusDays(21), hoy.plusDays(45), null, null);
+                                EstadoEtapa.PENDIENTE, bd("60.00"), bd("0.00"));
 
                 var req = guardarTarea(proyecto, analisis, gestionTipo, pm,
                                 "Levantamiento de requerimientos", EstadoTarea.FINALIZADO,
-                                bd("16.00"), bd("15.00"), inicio, inicio.plusDays(4), inicio, inicio.plusDays(4));
+                                bd("16.00"), bd("15.00"));
                 var funcional = guardarTarea(proyecto, analisis, gestionTipo, pm,
                                 "Diseno funcional y alcance", EstadoTarea.FINALIZADO,
-                                bd("24.00"), bd("23.00"), inicio.plusDays(5), inicio.plusDays(8),
-                                inicio.plusDays(5), inicio.plusDays(8));
+                                bd("24.00"), bd("23.00"));
                 var login = guardarTarea(proyecto, desarrollo, backendTipo, backend,
                                 "Login con JWT y refresh token", EstadoTarea.FINALIZADO,
-                                bd("18.00"), bd("18.00"), inicio.plusDays(9), inicio.plusDays(13),
-                                inicio.plusDays(9), inicio.plusDays(13));
+                                bd("18.00"), bd("18.00"));
                 var productos = guardarTarea(proyecto, desarrollo, backendTipo, backend,
                                 "CRUD de productos y categorias", EstadoTarea.FINALIZADO,
-                                bd("26.00"), bd("24.00"), inicio.plusDays(14), inicio.plusDays(20),
-                                inicio.plusDays(14), inicio.plusDays(20));
+                                bd("26.00"), bd("24.00"));
                 var checkout = guardarTarea(proyecto, desarrollo, backendTipo, backend,
                                 "Carrito y checkout", EstadoTarea.EN_CURSO,
-                                bd("40.00"), bd("27.50"), inicio.plusDays(21), hoy.plusDays(8),
-                                inicio.plusDays(21), null);
+                                bd("40.00"), bd("27.50"));
                 var panel = guardarTarea(proyecto, desarrollo, frontendTipo, frontend,
                                 "Panel administrativo responsive", EstadoTarea.EN_CURSO,
-                                bd("32.00"), bd("14.00"), inicio.plusDays(17), hoy.plusDays(10),
-                                inicio.plusDays(17), null);
+                                bd("32.00"), bd("14.00"));
                 guardarTarea(proyecto, desarrollo, backendTipo, backend,
                                 "Integracion de pasarela de pagos", EstadoTarea.PENDIENTE,
-                                bd("24.00"), bd("0.00"), hoy.plusDays(3), hoy.plusDays(15), null, null);
+                                bd("24.00"), bd("0.00"));
                 guardarTarea(proyecto, qaEtapa, qaTipo, qa,
                                 "Pruebas integrales", EstadoTarea.PENDIENTE,
-                                bd("35.00"), bd("0.00"), hoy.plusDays(21), hoy.plusDays(35), null, null);
+                                bd("35.00"), bd("0.00"));
                 guardarTarea(proyecto, qaEtapa, qaTipo, qa,
                                 "Despliegue a produccion", EstadoTarea.PENDIENTE,
-                                bd("25.00"), bd("0.00"), hoy.plusDays(36), hoy.plusDays(45), null, null);
+                                bd("25.00"), bd("0.00"));
 
-                registrarHoras(proyecto, req, pm, inicio.plusDays(1), bd("7.50"), true, bd("65.00"),
+                registrarHoras(proyecto, req, pm, bd("7.50"), true, bd("65.00"),
                                 "Kickoff y entrevistas con stakeholders");
-                registrarHoras(proyecto, req, pm, inicio.plusDays(2), bd("7.50"), true, bd("65.00"),
+                registrarHoras(proyecto, req, pm, bd("7.50"), true, bd("65.00"),
                                 "Mapa de procesos y backlog inicial");
-                registrarHoras(proyecto, funcional, pm, inicio.plusDays(6), bd("8.00"), true, bd("65.00"),
+                registrarHoras(proyecto, funcional, pm, bd("8.00"), true, bd("65.00"),
                                 "Definicion de historias y criterios");
-                registrarHoras(proyecto, funcional, pm, inicio.plusDays(7), bd("8.00"), true, bd("65.00"),
+                registrarHoras(proyecto, funcional, pm, bd("8.00"), true, bd("65.00"),
                                 "Priorizacion con cliente");
-                registrarHoras(proyecto, funcional, pm, inicio.plusDays(8), bd("7.00"), true, bd("65.00"),
+                registrarHoras(proyecto, funcional, pm, bd("7.00"), true, bd("65.00"),
                                 "Cierre de alcance MVP");
 
-                registrarHoras(proyecto, login, backend, inicio.plusDays(10), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, login, backend, bd("8.00"), true, bd("45.00"),
                                 "Implementacion access token");
-                registrarHoras(proyecto, login, backend, inicio.plusDays(11), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, login, backend, bd("8.00"), true, bd("45.00"),
                                 "Refresh token y seguridad");
-                registrarHoras(proyecto, login, backend, inicio.plusDays(12), bd("2.00"), true, bd("45.00"),
+                registrarHoras(proyecto, login, backend, bd("2.00"), true, bd("45.00"),
                                 "Ajustes y pruebas de login");
 
-                registrarHoras(proyecto, productos, backend, inicio.plusDays(15), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, productos, backend, bd("8.00"), true, bd("45.00"),
                                 "Modelo y endpoints de productos");
-                registrarHoras(proyecto, productos, backend, inicio.plusDays(16), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, productos, backend, bd("8.00"), true, bd("45.00"),
                                 "Categorias y validaciones");
-                registrarHoras(proyecto, productos, backend, inicio.plusDays(18), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, productos, backend, bd("8.00"), true, bd("45.00"),
                                 "Correcciones y pruebas API");
 
-                registrarHoras(proyecto, checkout, backend, inicio.plusDays(23), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, checkout, backend, bd("8.00"), true, bd("45.00"),
                                 "Carrito persistente");
-                registrarHoras(proyecto, checkout, backend, inicio.plusDays(24), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, checkout, backend, bd("8.00"), true, bd("45.00"),
                                 "Calculo de totales");
-                registrarHoras(proyecto, checkout, backend, inicio.plusDays(25), bd("8.00"), true, bd("45.00"),
+                registrarHoras(proyecto, checkout, backend, bd("8.00"), true, bd("45.00"),
                                 "Checkout inicial");
-                registrarHoras(proyecto, checkout, backend, hoy.minusDays(2), bd("3.50"), true, bd("45.00"),
+                registrarHoras(proyecto, checkout, backend, bd("3.50"), true, bd("45.00"),
                                 "Ajustes por feedback");
-                registrarHoras(proyecto, checkout, backend, hoy.minusDays(1), bd("4.00"), false, bd("45.00"),
+                registrarHoras(proyecto, checkout, backend, bd("4.00"), false, bd("45.00"),
                                 "Pendiente de aprobacion PM");
 
-                registrarHoras(proyecto, panel, frontend, inicio.plusDays(19), bd("7.00"), true, bd("42.00"),
+                registrarHoras(proyecto, panel, frontend, bd("7.00"), true, bd("42.00"),
                                 "Layout dashboard admin");
-                registrarHoras(proyecto, panel, frontend, inicio.plusDays(22), bd("7.00"), true, bd("42.00"),
+                registrarHoras(proyecto, panel, frontend, bd("7.00"), true, bd("42.00"),
                                 "Componentes de tabla y filtros");
 
                 ingresoRepo.save(Ingreso.builder()
@@ -474,8 +466,7 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         private EtapaProyecto guardarEtapa(Proyecto proyecto, String nombre, Integer orden, EstadoEtapa estado,
-                        BigDecimal horasPlanificadas, BigDecimal horasReales,
-                        LocalDate inicioPlan, LocalDate finPlan, LocalDate inicioReal, LocalDate finReal) {
+                        BigDecimal horasPlanificadas, BigDecimal horasReales) {
                 return etapaRepo.save(EtapaProyecto.builder()
                                 .proyecto(proyecto)
                                 .nombre(nombre)
@@ -484,17 +475,12 @@ public class DataSeeder implements CommandLineRunner {
                                 .estado(estado)
                                 .horasPlanificadas(horasPlanificadas)
                                 .horasReales(horasReales)
-                                .fechaInicioPlanificada(inicioPlan)
-                                .fechaFinPlanificada(finPlan)
-                                .fechaInicioReal(inicioReal)
-                                .fechaFinReal(finReal)
                                 .build());
         }
 
         private com.profitrack.dominio.model.TareaProyecto guardarTarea(Proyecto proyecto, EtapaProyecto etapa,
                         TipoTarea tipo, Empleado empleado, String nombre, EstadoTarea estado,
-                        BigDecimal horasPlanificadas, BigDecimal horasReales,
-                        LocalDate inicioPlan, LocalDate finPlan, LocalDate inicioReal, LocalDate finReal) {
+                        BigDecimal horasPlanificadas, BigDecimal horasReales) {
                 return tareaRepo.save(com.profitrack.dominio.model.TareaProyecto.builder()
                                 .proyecto(proyecto)
                                 .etapaProyecto(etapa)
@@ -505,28 +491,21 @@ public class DataSeeder implements CommandLineRunner {
                                 .estado(estado)
                                 .horasPlanificadas(horasPlanificadas)
                                 .horasReales(horasReales)
-                                .fechaInicioPlanificada(inicioPlan)
-                                .fechaFinPlanificada(finPlan)
-                                .fechaInicioReal(inicioReal)
-                                .fechaFinReal(finReal)
                                 .build());
         }
 
         private void registrarHoras(Proyecto proyecto, com.profitrack.dominio.model.TareaProyecto tarea,
-                        Empleado empleado, LocalDate fecha, BigDecimal horas, boolean aprobado,
+                        Empleado empleado, BigDecimal horas, boolean aprobado,
                         BigDecimal costoHora, String descripcion) {
-                LocalDateTime ingreso = fecha.atTime(9, 0);
                 RegistroHoras registro = registroHorasRepo.save(RegistroHoras.builder()
                                 .empleado(empleado)
                                 .proyecto(proyecto)
                                 .tarea(tarea)
-                                .fechaTrabajo(fecha)
-                                .horaIngreso(ingreso)
-                                .horaSalida(ingreso.plusHours(8))
-                                .minutosDescanso(60)
                                 .horasTrabajadas(horas)
                                 .descripcion(descripcion)
                                 .aprobado(aprobado)
+                                .estadoAprobacion(aprobado ? EstadoAprobacion.APROBADO : EstadoAprobacion.PENDIENTE)
+                                .aprobadoEn(aprobado ? Instant.now() : null)
                                 .build());
 
                 if (aprobado) {
