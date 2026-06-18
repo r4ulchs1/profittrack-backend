@@ -19,6 +19,7 @@ import java.util.List;
 public class OwnerDashboardResponseDto {
     private ProyectoResponseDto proyecto;
     private RentabilidadResponseDto rentabilidad;
+    private EstadisticasProyectoDto estadisticas;
     private RegistroHorasResumenDto resumenHoras;
     private List<CostoEmpleadoDto> costosPorEmpleado;
     private List<ProyectoEmpleadoResponseDto> equipo;
@@ -35,7 +36,32 @@ public class OwnerDashboardResponseDto {
         private Long empleadoId;
         private String empleadoNombre;
         private BigDecimal totalHoras;
+        private BigDecimal costoHoraPromedio;
+        private BigDecimal ultimoCostoHoraAplicado;
         private BigDecimal totalCosto;
+        private BigDecimal porcentajeCostoLaboral;
         private Integer registros;
+    }
+
+    @Data
+    @Builder
+    public static class EstadisticasProyectoDto {
+        private Long proyectoId;
+        private String proyectoNombre;
+        private String estado;
+        private String semaforo;
+        private BigDecimal horasPlanificadas;
+        private BigDecimal horasInvertidas;
+        private BigDecimal horasPendientes;
+        private BigDecimal horasDesaprobadas;
+        private BigDecimal avanceHorasPorcentaje;
+        private BigDecimal horasExcedidas;
+        private BigDecimal costoLaboral;
+        private BigDecimal costoOperativo;
+        private BigDecimal costoTotalProyecto;
+        private BigDecimal costoPlanificado;
+        private BigDecimal saldoPresupuesto;
+        private BigDecimal porcentajePresupuestoConsumido;
+        private BigDecimal costoPromedioHoraProyecto;
     }
 }

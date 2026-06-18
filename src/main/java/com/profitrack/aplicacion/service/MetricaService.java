@@ -2,8 +2,10 @@ package com.profitrack.aplicacion.service;
 
 import com.profitrack.aplicacion.dto.metricaDto.MetricaSnapshotResponseDto;
 import com.profitrack.aplicacion.dto.metricaDto.RentabilidadResponseDto;
+import com.profitrack.dominio.model.EstadoAprobacion;
 import com.profitrack.dominio.model.MetricaProyecto;
 import com.profitrack.dominio.model.Proyecto;
+import com.profitrack.dominio.model.RegistroHoras;
 import com.profitrack.aplicacion.puerto.entrada.MetricaUseCase;
 import com.profitrack.dominio.puerto.salida.*;
 import lombok.RequiredArgsConstructor;
@@ -98,11 +100,18 @@ public class MetricaService implements MetricaUseCase {
                 ? margenReal.divide(ingresoReal, 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal("100"))
                 : BigDecimal.ZERO;
+        BigDecimal avanceHorasPorcentaje = porcentaje(horasReales, horasPlanificadas);
+        BigDecimal horasExcedidas = horasPlanificadas.compareTo(BigDecimal.ZERO) > 0
+                && horasReales.compareTo(horasPlanificadas) > 0
+                        ? horasReales.subtract(horasPlanificadas)
+                        : BigDecimal.ZERO;
+        BigDecimal porcentajePresupuestoConsumido = porcentaje(costoReal, costoPlanificado);
+        BigDecimal saldoPresupuesto = costoPlanificado.subtract(costoReal);
+        BigDecimal costoPromedioHora = ratio(costoLaboral, horasReales);
 
         BigDecimal cpi = costoPlanificado.compareTo(BigDecimal.ZERO) > 0
-                ? costoPlanificado.divide(
-                        costoReal.compareTo(BigDecimal.ZERO) > 0 ? costoReal : BigDecimal.ONE,
-                        4, RoundingMode.HALF_UP)
+                && costoReal.compareTo(BigDecimal.ZERO) > 0
+                        ? costoPlanificado.divide(costoReal, 4, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
         BigDecimal spi = horasPlanificadas.compareTo(BigDecimal.ZERO) > 0
@@ -123,7 +132,13 @@ public class MetricaService implements MetricaUseCase {
                 .margenPlanificado(margenPlanificado)
                 .porcentajeMargen(porcentajeMargen)
                 .horasReales(horasReales)
+                .horasInvertidas(horasReales)
                 .horasPlanificadas(horasPlanificadas)
+                .avanceHorasPorcentaje(avanceHorasPorcentaje)
+                .horasExcedidas(horasExcedidas)
+                .porcentajePresupuestoConsumido(porcentajePresupuestoConsumido)
+                .saldoPresupuesto(saldoPresupuesto)
+                .costoPromedioHora(costoPromedioHora)
                 .cpi(cpi)
                 .spi(spi)
                 .esRentable(margenReal.compareTo(BigDecimal.ZERO) > 0)
@@ -134,8 +149,7 @@ public class MetricaService implements MetricaUseCase {
 
     private BigDecimal calcularCostoLaboral(Long proyectoId) {
         return costoRegistroRepo.buscarPorProyecto(proyectoId).stream()
-                .filter(c -> c.getRegistroHoras() != null
-                        && Boolean.TRUE.equals(c.getRegistroHoras().getAprobado()))
+                .filter(c -> c.getRegistroHoras() != null && estaAprobado(c.getRegistroHoras()))
                 .map(c -> safeValue(c.getCostoTotal()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -154,13 +168,34 @@ public class MetricaService implements MetricaUseCase {
 
     private BigDecimal calcularHorasReales(Long proyectoId) {
         return registroHorasRepo.buscarActivosPorProyecto(proyectoId).stream()
-                .filter(rh -> Boolean.TRUE.equals(rh.getAprobado()))
+                .filter(this::estaAprobado)
                 .map(rh -> safeValue(rh.getHorasTrabajadas()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    private boolean estaAprobado(RegistroHoras registro) {
+        return Boolean.TRUE.equals(registro.getActivo())
+                && (EstadoAprobacion.APROBADO.equals(registro.getEstadoAprobacion())
+                        || Boolean.TRUE.equals(registro.getAprobado()));
+    }
+
     private BigDecimal safeValue(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private BigDecimal porcentaje(BigDecimal numerador, BigDecimal denominador) {
+        if (denominador == null || denominador.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return numerador.divide(denominador, 4, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("100"));
+    }
+
+    private BigDecimal ratio(BigDecimal numerador, BigDecimal denominador) {
+        if (denominador == null || denominador.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return numerador.divide(denominador, 4, RoundingMode.HALF_UP);
     }
 
     private MetricaSnapshotResponseDto toSnapshotDto(MetricaProyecto m, BigDecimal costoLaboral,

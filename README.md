@@ -37,6 +37,6 @@ El colaborador trabaja en el proyecto y registra su tiempo en su hoja de horas (
 
 ## 5. Visualización de KPIS y Rentabilidad
 El Owner/Gerente/PM visualiza el estado y rentabilidad en tiempo real:
-- `GET /api/metricas/proyecto/{id}/actual` - Devuelve las métricas de rentabilidad actuales en tiempo real (Ingresos vs Costos [Laborales + OPEX], Margen de Ganancia, SPI, CPI y si el proyecto sigue siendo rentable).
+- `GET /api/metricas/proyecto/{id}/actual` - Devuelve las metricas de rentabilidad actuales en tiempo real: ingresos, costos laborales + OPEX, margen, horas invertidas vs planificadas, consumo de presupuesto y costo promedio por hora. CPI/SPI quedan solo como compatibilidad.
 - `POST /api/metricas/proyecto/{id}/snapshot` - Registra una captura histórica del estado del proyecto para trazabilidad en el tiempo.
 - `GET /api/metricas/proyecto/{id}` - Listado de snapshots históricos de métricas.

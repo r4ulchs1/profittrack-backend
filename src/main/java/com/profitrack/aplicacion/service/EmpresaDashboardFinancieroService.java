@@ -26,9 +26,7 @@ import java.util.List;
 public class EmpresaDashboardFinancieroService implements EmpresaDashboardFinancieroUseCase {
 
     private static final BigDecimal ZERO = BigDecimal.ZERO;
-    private static final BigDecimal ONE = BigDecimal.ONE;
-    private static final BigDecimal CPI_RIESGO = new BigDecimal("0.8");
-    private static final BigDecimal SPI_RIESGO = new BigDecimal("1.2");
+    private static final BigDecimal OCHENTA_POR_CIENTO = new BigDecimal("80.00");
 
     private final EmpresaUseCase empresaUseCase;
     private final ProyectoUseCase proyectoUseCase;
@@ -113,7 +111,13 @@ public class EmpresaDashboardFinancieroService implements EmpresaDashboardFinanc
                 .totalProyectos(proyectos.size())
                 .proyectosRentables(proyectosRentables)
                 .proyectosEnRiesgo(proyectosEnRiesgo)
-                .semaforo(calcularSemaforo(margenReal, cpi, spi, totalCostoPlanificado, horasPlanificadas, proyectosEnRiesgo))
+                .semaforo(calcularSemaforo(
+                        margenReal,
+                        totalCostoReal,
+                        totalCostoPlanificado,
+                        horasReales,
+                        horasPlanificadas,
+                        proyectosEnRiesgo))
                 .alertas(alertas)
                 .proyectos(proyectosFinancieros)
                 .ingresos(ingresos)
@@ -128,9 +132,9 @@ public class EmpresaDashboardFinancieroService implements EmpresaDashboardFinanc
                 .estado(r.getEstado())
                 .semaforo(calcularSemaforo(
                         safe(r.getMargenReal()),
-                        safe(r.getCpi()),
-                        safe(r.getSpi()),
+                        safe(r.getCostoReal()),
                         safe(r.getCostoPlanificado()),
+                        safe(r.getHorasReales()),
                         safe(r.getHorasPlanificadas()),
                         0))
                 .ingresoPlanificado(r.getIngresoPlanificado())
@@ -151,21 +155,23 @@ public class EmpresaDashboardFinancieroService implements EmpresaDashboardFinanc
     }
 
     private String calcularSemaforo(BigDecimal margenReal,
-            BigDecimal cpi,
-            BigDecimal spi,
+            BigDecimal costoReal,
             BigDecimal costoPlanificado,
+            BigDecimal horasReales,
             BigDecimal horasPlanificadas,
             int proyectosEnRiesgo) {
-        boolean evaluarCpi = costoPlanificado.compareTo(ZERO) > 0;
-        boolean evaluarSpi = horasPlanificadas.compareTo(ZERO) > 0;
+        boolean tienePresupuesto = costoPlanificado.compareTo(ZERO) > 0;
+        boolean tieneHorasPlanificadas = horasPlanificadas.compareTo(ZERO) > 0;
 
         if (margenReal.compareTo(ZERO) < 0
-                || (evaluarCpi && cpi.compareTo(CPI_RIESGO) < 0)
-                || (evaluarSpi && spi.compareTo(SPI_RIESGO) > 0)) {
+                || (tienePresupuesto && costoReal.compareTo(costoPlanificado) > 0)
+                || (tieneHorasPlanificadas && horasReales.compareTo(horasPlanificadas) > 0)) {
             return "ROJO";
         }
-        if ((evaluarCpi && cpi.compareTo(ONE) < 0)
-                || (evaluarSpi && spi.compareTo(ONE) > 0)
+        if ((tienePresupuesto && porcentaje(costoReal, costoPlanificado).compareTo(OCHENTA_POR_CIENTO) >= 0)
+                || (tieneHorasPlanificadas && porcentaje(horasReales, horasPlanificadas).compareTo(OCHENTA_POR_CIENTO) >= 0)
+                || (!tienePresupuesto && costoReal.compareTo(ZERO) > 0)
+                || (!tieneHorasPlanificadas && horasReales.compareTo(ZERO) > 0)
                 || proyectosEnRiesgo > 0) {
             return "AMARILLO";
         }
