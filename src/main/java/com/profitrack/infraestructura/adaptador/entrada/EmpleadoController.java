@@ -32,6 +32,7 @@ public class EmpleadoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<EmpleadoResponseDto> obtenerPorId(@PathVariable Long id) {
+        securityContext.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.GERENTE, RolConstantes.PM, RolConstantes.OWNER);
         return ResponseEntity.ok(empleadoUseCase.obtenerPorId(id));
     }
 

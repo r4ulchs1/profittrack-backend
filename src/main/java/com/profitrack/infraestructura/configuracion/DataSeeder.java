@@ -1,5 +1,6 @@
 package com.profitrack.infraestructura.configuracion;
 
+import com.profitrack.dominio.model.Administrador;
 import com.profitrack.dominio.model.CategoriaEgreso;
 import com.profitrack.dominio.model.Cliente;
 import com.profitrack.dominio.model.CostoRegistroHoras;
@@ -22,6 +23,7 @@ import com.profitrack.dominio.model.Rol;
 import com.profitrack.dominio.model.TipoIngreso;
 import com.profitrack.dominio.model.TipoServicio;
 import com.profitrack.dominio.model.TipoTarea;
+import com.profitrack.infraestructura.adaptador.salida.persistencia.repositorio.AdministradorJpaRepository;
 import com.profitrack.infraestructura.repository.CategoriaEgresoJpaRepository;
 import com.profitrack.infraestructura.repository.ClienteJpaRepository;
 import com.profitrack.infraestructura.repository.CostoRegistroHorasJpaRepository;
@@ -51,6 +53,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -63,6 +66,7 @@ public class DataSeeder implements CommandLineRunner {
         private final RolJpaRepository rolRepo;
         private final EmpleadoJpaRepository empleadoRepo;
         private final DuenioJpaRepository duenioRepo;
+        private final AdministradorJpaRepository administradorRepo;
         private final ClienteJpaRepository clienteRepo;
         private final TipoServicioJpaRepository tipoServicioRepo;
         private final TipoTareaJpaRepository tipoTareaRepo;
@@ -103,6 +107,8 @@ public class DataSeeder implements CommandLineRunner {
                                 "pm123");
                 obtenerOCrearEmpleado(empresa, rolAdmin, "admin@techconsult.pe", "Ana", "Rodriguez Torres",
                                 "admin123");
+                Administrador admin = obtenerOCrearAdministrador("admin@profit.com", "Admin", "ProfiTrack",
+                                "admin123");
                 Empleado backend = obtenerOCrearEmpleado(empresa, rolDev, "dev@techconsult.pe", "Luis",
                                 "Fernandez Diaz", "dev123");
                 Empleado frontend = obtenerOCrearEmpleado(empresa, rolDev, "frontend@techconsult.pe", "Sofia",
@@ -121,9 +127,11 @@ public class DataSeeder implements CommandLineRunner {
                 obtenerOCrearTipoServicio(empresa, "Consultoria TI", "Asesoria en tecnologia de la informacion");
 
                 TipoTarea backendTipo = obtenerOCrearTipoTarea(empresa, "Backend", "Servicios, API y base de datos");
-                TipoTarea frontendTipo = obtenerOCrearTipoTarea(empresa, "Frontend", "Interfaz y experiencia de usuario");
+                TipoTarea frontendTipo = obtenerOCrearTipoTarea(empresa, "Frontend",
+                                "Interfaz y experiencia de usuario");
                 TipoTarea qaTipo = obtenerOCrearTipoTarea(empresa, "QA", "Pruebas funcionales y despliegue");
-                TipoTarea gestionTipo = obtenerOCrearTipoTarea(empresa, "Gestion", "Analisis, coordinacion y seguimiento");
+                TipoTarea gestionTipo = obtenerOCrearTipoTarea(empresa, "Gestion",
+                                "Analisis, coordinacion y seguimiento");
 
                 CategoriaEgreso infraestructura = obtenerOCrearCategoria(empresa, "Infraestructura");
                 CategoriaEgreso licencias = obtenerOCrearCategoria(empresa, "Licencias");
@@ -138,7 +146,7 @@ public class DataSeeder implements CommandLineRunner {
                                 backendTipo, frontendTipo, qaTipo, gestionTipo,
                                 infraestructura, licencias, serviciosExternos);
 
-                log.info("Seed demo completado. Credenciales: owner@techconsult.pe / owner123, pm@techconsult.pe / pm123.");
+                log.info("Seed demo completado. Credenciales: owner@techconsult.pe / owner123, pm@techconsult.pe / pm123, admin@profit.com / admin123.");
         }
 
         private Empresa obtenerOCrearEmpresa() {
@@ -163,7 +171,7 @@ public class DataSeeder implements CommandLineRunner {
                                                 .build()));
         }
 
-        private void obtenerOCrearDuenio(Empresa empresa) {
+    private void obtenerOCrearDuenio(Empresa empresa) {
                 duenioRepo.findAll().stream()
                                 .filter(d -> "owner@techconsult.pe".equalsIgnoreCase(d.getCorreo()))
                                 .findFirst()
@@ -181,6 +189,25 @@ public class DataSeeder implements CommandLineRunner {
                                                 .apellidos("Rivera Mendoza")
                                                 .correo("owner@techconsult.pe")
                                                 .contrasenia(passwordEncoder.encode("owner123"))
+                                                .build()));
+        }
+
+        private Administrador obtenerOCrearAdministrador(String correo, String nombres, String apellidos, String contrasenia) {
+                return administradorRepo.findAll().stream()
+                                .filter(a -> correo.equalsIgnoreCase(a.getCorreo()))
+                                .findFirst()
+                                .map(a -> {
+                                        a.setActivo(true);
+                                        if (a.getContrasenia() == null) {
+                                                a.setContrasenia(passwordEncoder.encode(contrasenia));
+                                        }
+                                        return administradorRepo.save(a);
+                                })
+                                .orElseGet(() -> administradorRepo.save(Administrador.builder()
+                                                .correo(correo)
+                                                .nombres(nombres)
+                                                .apellidos(apellidos)
+                                                .contrasenia(passwordEncoder.encode(contrasenia))
                                                 .build()));
         }
 

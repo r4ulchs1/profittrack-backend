@@ -129,7 +129,8 @@ public class ProyectoService implements ProyectoUseCase {
     }
 
     @Override
-    public List<ProyectoResponseDto> listarActivosPorEmpresaParaUsuario(Long empresaId, Long empleadoId, String rolGlobal) {
+    public List<ProyectoResponseDto> listarActivosPorEmpresaParaUsuario(Long empresaId, Long empleadoId,
+            String rolGlobal) {
         return proyectoRepository.buscarActivosPorEmpresa(empresaId)
                 .stream()
                 .map(p -> toDto(p, empleadoId, rolGlobal))
@@ -145,7 +146,8 @@ public class ProyectoService implements ProyectoUseCase {
     }
 
     @Override
-    public List<ProyectoResponseDto> listarInactivosPorEmpresaParaUsuario(Long empresaId, Long empleadoId, String rolGlobal) {
+    public List<ProyectoResponseDto> listarInactivosPorEmpresaParaUsuario(Long empresaId, Long empleadoId,
+            String rolGlobal) {
         return proyectoRepository.buscarInactivosPorEmpresa(empresaId)
                 .stream()
                 .map(p -> toDto(p, empleadoId, rolGlobal))
@@ -355,7 +357,8 @@ public class ProyectoService implements ProyectoUseCase {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (horasProyecto != null && totalEtapas.compareTo(horasProyecto) != 0) {
-            throw new RuntimeException("Las horas planificadas del proyecto deben coincidir con la suma de horas de sus etapas");
+            throw new RuntimeException(
+                    "Las horas planificadas del proyecto deben coincidir con la suma de horas de sus etapas");
         }
 
         return totalEtapas;
@@ -400,6 +403,7 @@ public class ProyectoService implements ProyectoUseCase {
     }
 
     private EtapaProyectoResponseDto toEtapaDto(EtapaProyecto etapa, List<TareaProyecto> tareas) {
+
         BigDecimal horasTareasPlanificadas = tareas.stream()
                 .map(t -> safeValue(t.getHorasPlanificadas()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

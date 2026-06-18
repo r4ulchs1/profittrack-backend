@@ -31,6 +31,7 @@ public class ClienteController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ClienteResponseDto> obtenerPorId(@PathVariable Long id) {
+        securityContext.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.PM, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(clienteUseCase.obtenerPorId(id));
     }
 

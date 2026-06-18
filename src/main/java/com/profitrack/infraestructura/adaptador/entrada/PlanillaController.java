@@ -28,11 +28,13 @@ public class PlanillaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PlanillaResponseDto> obtener(@PathVariable Long id) {
+        ctx.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.obtenerPorId(id));
     }
 
     @GetMapping
     public ResponseEntity<List<PlanillaResponseDto>> listar() {
+        ctx.validarRol(RolConstantes.ADMINISTRADOR, RolConstantes.GERENTE, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.listarPorEmpresa(ctx.getEmpresaId()));
     }
 }

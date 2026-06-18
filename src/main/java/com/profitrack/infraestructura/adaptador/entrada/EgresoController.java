@@ -28,17 +28,19 @@ public class EgresoController {
 
     @GetMapping
     public ResponseEntity<List<EgresoResponseDto>> listar() {
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.ADMINISTRADOR, RolConstantes.PM, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.listarPorEmpresa(ctx.getEmpresaId()));
     }
 
     @GetMapping("/proyecto/{proyectoId}")
     public ResponseEntity<List<EgresoResponseDto>> listarPorProyecto(@PathVariable Long proyectoId) {
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.ADMINISTRADOR, RolConstantes.PM, RolConstantes.OWNER);
         return ResponseEntity.ok(useCase.listarPorProyecto(proyectoId));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        ctx.validarRol("Gerente", "Owner");
+        ctx.validarRol(RolConstantes.GERENTE, RolConstantes.OWNER);
         useCase.eliminar(id);
         return ResponseEntity.noContent().build();
     }
