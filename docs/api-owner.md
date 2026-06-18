@@ -107,7 +107,7 @@ Que pintar:
 - Total costos reales vs planificados.
 - Costo laboral y egresos reales.
 - Margen real y margen planificado.
-- CPI/SPI global.
+- Horas invertidas vs planificadas y consumo de presupuesto global.
 - Proyectos rentables y proyectos en riesgo.
 - Semaforo global.
 - Alertas globales.
@@ -125,13 +125,35 @@ Response:
 {
   "proyecto": {},
   "rentabilidad": {},
+  "estadisticas": {
+    "proyectoId": 4,
+    "proyectoNombre": "Implementacion ProfitTrack",
+    "estado": "EN_PROCESO",
+    "semaforo": "AMARILLO",
+    "horasPlanificadas": 160.00,
+    "horasInvertidas": 35.50,
+    "horasPendientes": 4.50,
+    "horasDesaprobadas": 0.00,
+    "avanceHorasPorcentaje": 22.1875,
+    "horasExcedidas": 0.00,
+    "costoLaboral": 2000.00,
+    "costoOperativo": 500.00,
+    "costoTotalProyecto": 2500.00,
+    "costoPlanificado": 12000.00,
+    "saldoPresupuesto": 9500.00,
+    "porcentajePresupuestoConsumido": 20.8333,
+    "costoPromedioHoraProyecto": 56.3380
+  },
   "resumenHoras": {},
   "costosPorEmpleado": [
     {
       "empleadoId": 7,
       "empleadoNombre": "Backend Developer",
       "totalHoras": 25.00,
+      "costoHoraPromedio": 50.00,
+      "ultimoCostoHoraAplicado": 50.00,
       "totalCosto": 1250.00,
+      "porcentajeCostoLaboral": 62.5000,
       "registros": 5
     }
   ],
@@ -140,7 +162,7 @@ Response:
   "ingresos": [],
   "egresos": [],
   "snapshots": [],
-  "semaforo": "VERDE",
+  "semaforo": "AMARILLO",
   "alertas": [
     "Hay horas pendientes de aprobacion"
   ]
@@ -150,9 +172,10 @@ Response:
 Campos:
 
 - `proyecto`: datos base y planificados del proyecto.
-- `rentabilidad`: calculo vivo de costos, ingresos, margen, CPI, SPI.
+- `estadisticas`: bloque principal para frontend. Resume estado, horas invertidas vs planificadas, costo del proyecto y consumo de presupuesto.
+- `rentabilidad`: calculo vivo financiero. Mantiene `cpi` y `spi` por compatibilidad, pero la pantalla principal no debe depender de esos campos.
 - `resumenHoras`: horas registradas, aprobadas y pendientes.
-- `costosPorEmpleado`: costo laboral generado por empleado.
+- `costosPorEmpleado`: costo laboral generado por empleado con costo hora promedio y ultimo costo hora aplicado.
 - `equipo`: empleados asignados y costo hora aplicado.
 - `costosAplicados`: historial de costo hora aplicado por empleado dentro del proyecto.
 - `ingresos`: ingresos reales del proyecto.
@@ -242,7 +265,13 @@ Response:
   "margenPlanificado": 3000.00,
   "porcentajeMargen": 28.57,
   "horasReales": 35.50,
+  "horasInvertidas": 35.50,
   "horasPlanificadas": 160.00,
+  "avanceHorasPorcentaje": 22.1875,
+  "horasExcedidas": 0.00,
+  "porcentajePresupuestoConsumido": 20.8333,
+  "saldoPresupuesto": 9500.00,
+  "costoPromedioHora": 56.3380,
   "cpi": 4.80,
   "spi": 0.22,
   "esRentable": true
@@ -261,8 +290,12 @@ costoPlanificado = proyecto.presupuestoPlanificado
 margenReal = ingresoReal - costoReal
 margenPlanificado = ingresoPlanificado - costoPlanificado
 porcentajeMargen = margenReal / ingresoReal * 100
-cpi = costoPlanificado / costoReal
-spi = horasReales / horasPlanificadas
+horasInvertidas = horasReales
+avanceHorasPorcentaje = horasInvertidas / horasPlanificadas * 100
+horasExcedidas = max(horasInvertidas - horasPlanificadas, 0)
+porcentajePresupuestoConsumido = costoReal / costoPlanificado * 100
+saldoPresupuesto = costoPlanificado - costoReal
+costoPromedioHora = costoLaboral / horasInvertidas
 esRentable = margenReal > 0
 ```
 
@@ -275,9 +308,15 @@ Que pintar:
 - Card: Margen planificado.
 - Card: Margen real.
 - Card: Porcentaje margen.
+- Card: Horas invertidas vs horas planificadas.
+- Card: Costo total del proyecto.
+- Card: Costo promedio por hora.
 - Indicador: `esRentable`.
-- Indicador: `cpi`.
-- Indicador: `spi`.
+
+Notas:
+
+- `cpi` y `spi` siguen en la respuesta para compatibilidad con frontend anterior.
+- Para la vista nueva, usar `estadisticas` del dashboard consolidado o los campos directos de esta respuesta.
 
 ## 3. Resumen de horas
 
@@ -327,7 +366,7 @@ Que pintar:
 - Horas por empleado.
 - Alerta si `totalHorasPendientes > 0`.
 
-Nota: `totalHorasRechazadas` hoy devuelve `0` porque registro de horas aun no diferencia pendiente vs rechazado con enum.
+Nota: `totalHorasRechazadas` suma registros con `estadoAprobacion = DESAPROBADO`.
 
 ## 4. Costo laboral por empleado
 
@@ -343,7 +382,10 @@ Response:
     "empleadoId": 7,
     "empleadoNombre": "Backend Developer",
     "totalHoras": 25.00,
+    "costoHoraPromedio": 50.00,
+    "ultimoCostoHoraAplicado": 50.00,
     "totalCosto": 1250.00,
+    "porcentajeCostoLaboral": 62.5000,
     "registros": 5
   }
 ]
@@ -353,7 +395,10 @@ Que pintar:
 
 - Tabla de empleados.
 - Total de horas aprobadas por empleado.
+- Costo hora promedio generado por las horas aprobadas.
+- Ultimo costo hora aplicado al aprobar horas.
 - Total de costo generado por empleado.
+- Porcentaje que representa del costo laboral del proyecto.
 - Cantidad de registros aprobados.
 
 Uso Owner:
@@ -532,15 +577,12 @@ Que graficar:
 
 ## Semaforo para frontend
 
-Con `RentabilidadResponse`:
+El semaforo se calcula desde `estadisticas`, no desde CPI/SPI.
 
 ### Verde
 
 ```txt
-esRentable = true
-cpi >= 1
-spi <= 1
-margenReal >= 0
+No cae en reglas amarillas ni rojas.
 ```
 
 Mensaje sugerido:
@@ -552,10 +594,12 @@ Proyecto rentable y dentro del presupuesto.
 ### Amarillo
 
 ```txt
-esRentable = true
-cpi >= 0.8 y cpi < 1
-o spi > 1 y spi <= 1.2
-o totalHorasPendientes > 0
+totalHorasPendientes > 0
+o porcentajePresupuestoConsumido >= 80 y costoTotalProyecto <= costoPlanificado
+o avanceHorasPorcentaje >= 80 y horasInvertidas <= horasPlanificadas
+o costoTotalProyecto > 0 y costoPlanificado = 0
+o horasInvertidas > 0 y horasPlanificadas = 0
+o ingresoReal = 0 y costoTotalProyecto > 0
 ```
 
 Mensaje sugerido:
@@ -567,10 +611,11 @@ Proyecto rentable, pero con riesgo en costos, horas o aprobaciones pendientes.
 ### Rojo
 
 ```txt
-esRentable = false
+estado = CANCELADO
 o margenReal < 0
-o cpi < 0.8
-o spi > 1.2
+o costoTotalProyecto > costoPlanificado, si hay costoPlanificado
+o horasInvertidas > horasPlanificadas, si hay horasPlanificadas
+o estado = FINALIZADO y esRentable = false
 ```
 
 Mensaje sugerido:
@@ -584,28 +629,29 @@ Proyecto en riesgo: revisar costos, horas e ingresos.
 Primera fila:
 
 - Estado del proyecto.
-- Precio venta / ingreso planificado.
-- Ingreso real.
-- Margen real.
 - Semaforo.
+- Horas invertidas vs horas planificadas.
+- Avance de horas.
+- Horas pendientes.
 
 Segunda fila:
 
 - Costo planificado.
-- Costo real.
+- Costo total del proyecto.
 - Costo laboral.
 - Costo operativo.
+- Presupuesto restante.
 
 Tercera fila:
 
-- Horas planificadas.
-- Horas reales/aprobadas.
-- Horas pendientes.
-- Avance de horas: `horasReales / horasPlanificadas`.
+- Precio venta / ingreso planificado.
+- Ingreso real.
+- Margen real.
+- Costo promedio por hora del proyecto.
 
 Tablas:
 
-- Costo por empleado.
+- Costo por empleado: `totalHoras`, `costoHoraPromedio`, `ultimoCostoHoraAplicado`, `totalCosto`, `porcentajeCostoLaboral`.
 - Horas por empleado.
 - Ingresos reales.
 - Egresos reales.
@@ -616,10 +662,10 @@ Tablas:
 Crear alertas visuales si:
 
 - `margenReal < 0`: el proyecto esta perdiendo dinero.
-- `costoReal > costoPlanificado`: se supero el presupuesto.
-- `horasReales > horasPlanificadas`: se superaron horas planificadas.
+- `costoTotalProyecto > costoPlanificado`: se supero el presupuesto.
+- `horasInvertidas > horasPlanificadas`: se superaron horas planificadas.
 - `totalHorasPendientes > 0`: hay horas por aprobar.
-- `ingresoReal = 0` y hay costoReal: hay costos sin ingresos registrados.
+- `ingresoReal = 0` y hay `costoTotalProyecto`: hay costos sin ingresos registrados.
 - `costoLaboral > costoOpex * 2`: el costo principal viene de horas.
 - `estado = FINALIZADO` y `esRentable = false`: proyecto cerrado con perdida.
 

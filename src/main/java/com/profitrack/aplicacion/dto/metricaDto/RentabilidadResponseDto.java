@@ -21,8 +21,15 @@ public class RentabilidadResponseDto {
     private BigDecimal margenPlanificado;
     private BigDecimal porcentajeMargen;
     private BigDecimal horasReales;
+    private BigDecimal horasInvertidas;
     private BigDecimal horasPlanificadas;
-    private BigDecimal cpi;  // Cost Performance Index: costoPlanificado / costoReal (>1 = bajo presupuesto)
-    private BigDecimal spi;  // Schedule Performance Index: horasReales / horasPlanificadas
+    private BigDecimal avanceHorasPorcentaje;
+    private BigDecimal horasExcedidas;
+    private BigDecimal porcentajePresupuestoConsumido;
+    private BigDecimal saldoPresupuesto;
+    private BigDecimal costoPromedioHora;
+    // Compatibilidad con frontend anterior. No usar como metrica principal del proyecto.
+    private BigDecimal cpi;
+    private BigDecimal spi;
     private Boolean esRentable;
 }

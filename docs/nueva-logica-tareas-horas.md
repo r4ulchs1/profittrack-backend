@@ -377,22 +377,32 @@ avanceHoras = horasReales / horasPlanificadas
 avanceHoras = 44 / 44 = 1.00 = 100%
 ```
 
-### CPI y SPI
+### Metricas principales para dashboard
 
-Si se mantiene la logica actual:
+La pantalla principal del proyecto ya no debe depender de CPI/SPI. Esas metricas pueden seguir existiendo por compatibilidad, pero el frontend debe priorizar estos campos:
 
 ```txt
-cpi = costoPlanificado / costoReal
-spi = horasReales / horasPlanificadas
+horasInvertidas = horasReales aprobadas
+avanceHorasPorcentaje = horasInvertidas / horasPlanificadas * 100
+horasExcedidas = max(horasInvertidas - horasPlanificadas, 0)
+costoLaboral = suma de costos aprobados por empleado
+costoOperativo = suma de egresos activos del proyecto
+costoTotalProyecto = costoLaboral + costoOperativo
+saldoPresupuesto = costoPlanificado - costoTotalProyecto
+porcentajePresupuestoConsumido = costoTotalProyecto / costoPlanificado * 100
+costoPromedioHoraProyecto = costoLaboral / horasInvertidas
 ```
 
-Interpretacion:
+El costo por empleado se muestra agrupando registros aprobados y activos:
 
-- `spi = 1`: se consumieron exactamente las horas estimadas.
-- `spi > 1`: se consumieron mas horas de las estimadas.
-- `spi < 1`: aun no se consumen todas las horas estimadas.
-- `cpi >= 1`: el costo real esta dentro del presupuesto.
-- `cpi < 1`: el costo real supero el presupuesto.
+```txt
+totalHorasEmpleado = suma de horas aprobadas del empleado
+totalCostoEmpleado = suma de costo_total del empleado
+costoHoraPromedioEmpleado = totalCostoEmpleado / totalHorasEmpleado
+ultimoCostoHoraAplicado = ultimo costo_hora usado al aprobar horas
+```
+
+Para frontend, ver tambien `docs/estadisticas-proyecto-frontend.md`.
 
 ## Cambios necesarios en backend
 
