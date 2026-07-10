@@ -9,4 +9,6 @@ public interface EmpresaRepository {
     Empresa guardar(Empresa empresa);
     Optional<Empresa> buscarPorId(Long id);
     List<Empresa> buscarActivos();
+    List<Empresa> buscarTodos();
+    void eliminar(Long id);
 }

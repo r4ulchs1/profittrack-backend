@@ -10,4 +10,5 @@ public interface ProyectoRepository {
     Optional<Proyecto> buscarPorId(Long id);
     List<Proyecto> buscarActivosPorEmpresa(Long empresaId);
     List<Proyecto> buscarInactivosPorEmpresa(Long empresaId);
+    List<Proyecto> buscarTodos();
 }
