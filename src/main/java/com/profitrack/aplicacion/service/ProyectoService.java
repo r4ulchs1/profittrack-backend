@@ -395,13 +395,6 @@ public class ProyectoService implements ProyectoUseCase {
                 .collect(Collectors.toList());
     }
 
-    private EtapaProyectoResponseDto toEtapaDto(EtapaProyecto etapa) {
-        List<TareaProyecto> tareas = etapa.getId() != null
-                ? tareaProyectoRepository.buscarActivasPorEtapa(etapa.getId())
-                : List.of();
-        return toEtapaDto(etapa, tareas);
-    }
-
     private EtapaProyectoResponseDto toEtapaDto(EtapaProyecto etapa, List<TareaProyecto> tareas) {
 
         BigDecimal horasTareasPlanificadas = tareas.stream()
