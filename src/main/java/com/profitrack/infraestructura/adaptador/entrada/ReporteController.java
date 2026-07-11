@@ -53,4 +53,19 @@ public class ReporteController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new InputStreamResource(stream));
     }
+
+    @GetMapping("/empresa/consolidado/pdf")
+    public ResponseEntity<InputStreamResource> exportarConsolidadoEmpresaPdf() {
+        Long empresaId = securityContext.getEmpresaId();
+        securityContext.validarRol(RolConstantes.GERENTE, RolConstantes.OWNER);
+
+        ByteArrayInputStream stream = reporteUseCase.generarReporteConsolidadoEmpresa(empresaId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=reporte_consolidado_empresa_" + empresaId + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(stream));
+    }
 }

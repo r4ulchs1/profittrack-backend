@@ -5,4 +5,5 @@ import java.io.ByteArrayInputStream;
 public interface ReporteUseCase {
     ByteArrayInputStream generarProyectoExcel(Long proyectoId);
     ByteArrayInputStream generarProyectoPdf(Long proyectoId);
+    ByteArrayInputStream generarReporteConsolidadoEmpresa(Long empresaId);
 }
