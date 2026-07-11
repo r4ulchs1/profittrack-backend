@@ -63,4 +63,22 @@ public class HealthController {
 
         return ResponseEntity.ok(body);
     }
+
+    @GetMapping("/stress")
+    public ResponseEntity<Map<String, Object>> stressTest(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "150000") int iterations) {
+        long startTime = System.currentTimeMillis();
+        double result = 0;
+        for (int i = 0; i < iterations; i++) {
+            for (int j = 0; j < 1000; j++) {
+                result += Math.sin(i) * Math.cos(j);
+            }
+        }
+        long duration = System.currentTimeMillis() - startTime;
+        return ResponseEntity.ok(Map.of(
+            "mensaje", "Stress calculation complete",
+            "duracionMs", duration,
+            "calculo", result
+        ));
+    }
 }
