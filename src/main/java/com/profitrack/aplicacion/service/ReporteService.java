@@ -288,7 +288,7 @@ public class ReporteService implements ReporteUseCase {
             title.setSpacingAfter(5);
             document.add(title);
 
-            Paragraph subtitle = new Paragraph("PROYECCIÓN (100,000 ITERACIONES POR PROYECTO)", subtitleFont);
+            Paragraph subtitle = new Paragraph("PROYECCIÓN (600,000 ITERACIONES POR PROYECTO)", subtitleFont);
             subtitle.setAlignment(Element.ALIGN_CENTER);
             subtitle.setSpacingAfter(15);
             document.add(subtitle);
@@ -342,13 +342,13 @@ public class ReporteService implements ReporteUseCase {
                 if (volatilidad < 0.05)
                     volatilidad = 0.05;
 
-                // 4. Simulación Monte Carlo en CPU (100,000 Iteraciones)
+                // 4. Simulación Monte Carlo en CPU (600,000 Iteraciones)
                 double simulatedCostSum = 0;
-                for (int k = 0; k < 100000; k++) {
+                for (int k = 0; k < 600000; k++) {
                     double randomFactor = Math.sin(k) * volatilidad;
                     simulatedCostSum += eacBase * (1 + randomFactor);
                 }
-                double avgProjectedCost = simulatedCostSum / 100000;
+                double avgProjectedCost = simulatedCostSum / 600000;
                 double avgProjectedMargin = (p.getPrecioVenta() != null ? p.getPrecioVenta().doubleValue() : 0.0)
                         - avgProjectedCost;
 
